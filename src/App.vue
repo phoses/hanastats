@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { ref } from 'vue';
+import { RouterLink, RouterView } from 'vue-router';
+import { useRouter } from 'vue-router';
+import Menubar from 'primevue/menubar';
+import { PrimeIcons } from 'primevue/api';
+
+const router = useRouter()
+
+const items = ref([
+  { label: 'stats', icon: PrimeIcons.CHART_BAR, command: () => router.push('/')},
+  { label: 'addgame', icon: PrimeIcons.PLUS, command: () => router.push('/addgame')},
+  { label: 'config', icon: PrimeIcons.PLUS_CIRCLE, command: () => router.push('/config')},
+]);
+
 </script>
 
 <template>
   <header>
-
-    <h1>hanastats</h1>
-
-    <div class="wrapper">
-      <nav>
-        <RouterLink to="/">stats</RouterLink>
-        <RouterLink to="/addgame">addgame</RouterLink>
-        <RouterLink to="/config">config</RouterLink>
-      </nav>
-    </div>
+    <Menubar :model="items" />
   </header>
 
   <RouterView />
