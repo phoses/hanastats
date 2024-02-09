@@ -7,17 +7,14 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config';
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+
 
 import App from './App.vue'
 import router from './router'
 import { firebaseConfig } from './auth/firebaseconfig';
 
 const app = createApp(App)
-
-const fbApp = initializeApp(firebaseConfig);
-
-const auth = getAuth(fbApp);
+initializeApp(firebaseConfig);
 
 app.use(createPinia())
 app.use(router)

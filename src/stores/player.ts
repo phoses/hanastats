@@ -1,13 +1,48 @@
-import { ref } from 'vue'
-import { defineStore } from 'pinia'
+import { ref } from 'vue';
+import { defineStore } from 'pinia';
+import { getDatabase, ref as fbRef, get, child, push } from "firebase/database";
+import _ from 'lodash';
+import { useLoadingStore } from './loading';
 
-export const usePlayersStore = defineStore('palyer', () => {
-  const players = ref([
-    { id: 1, name: 'op' },
-    { id: 2, name: 'pasi' },
-    { id: 3, name: 'kari'},
-    { id: 4, name: 'marko' },
-  ])
+export interface Player {
+  id: string;
+  username: string;
+};
 
-  return { players }
-})
+export const usePlayersStore = defineStore('player', () => {
+
+  const players = ref(null as Player[] | null);
+
+  const loadingStore = useLoadingStore();
+  const dbRef = fbRef(getDatabase());
+
+  async function getPlayers() {
+    loadingStore.addLoader();
+    const snapshot = await get(child(dbRef, 'users/'));
+
+    if (snapshot.exists()) {
+      players.value = _.map(_.keys(snapshot.val()), (id) => {
+        return {
+          id,
+          username: snapshot.val()[id].username,
+        }
+      });
+    } else {
+      console.log("No data available");
+    }
+
+    loadingStore.removeLoader();
+  }
+
+  async function addplayer(player: string) {
+    loadingStore.addLoader();
+    if (!_.find(players.value, { username: player }) && player !== "") {
+      await push(fbRef(getDatabase(), 'users/'), {
+        username: player,
+      });
+    }
+    loadingStore.removeLoader();
+  }
+
+  return { players, addplayer, getPlayers }
+});

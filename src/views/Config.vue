@@ -1,13 +1,16 @@
 <template>
-  <div class="d-flex">
+  <div>
     <h2>players</h2>
-    <Button label="New" icon="pi pi-plus" />
   </div>
   <ul>
     <li v-for="player in players" :key="player.id">
-      {{ player.name }}
+      {{ player.username }}
     </li>
   </ul>
+
+
+  <InputText type="text" v-model="playername" />
+  <Button @click="addPlayer" icon="pi pi-plus" size="large"/>
 
   <h2>games</h2>
   <ul>
@@ -16,6 +19,8 @@
     </li>
   </ul>
 
+  <InputText type="text" v-model="gamename" />
+  <Button @click="addGame" icon="pi pi-plus" size="large"/>
 
 </template>
 
@@ -23,12 +28,36 @@
 import { useGamesStore } from '@/stores/game';
 import { usePlayersStore } from '@/stores/player';
 import Button from 'primevue/button';
+import InputText from 'primevue/inputtext';
+import { ref, onMounted, computed } from 'vue';
 
 const gameStore = useGamesStore();
 const playerStore = usePlayersStore();
 
-const { games } = gameStore;
-const { players } = playerStore;
+const games = computed(() => gameStore.games);
+const players = computed(() => playerStore.players);
+const playername = ref('');
+const gamename = ref('');
+
+onMounted(async () => {
+  if (players.value === null) {
+    await playerStore.getPlayers();
+    await gameStore.getGames();
+  }
+});
+
+async function addPlayer() {
+  await playerStore.addplayer(playername.value);
+  await playerStore.getPlayers();
+  playername.value = '';
+}
+
+async function addGame() {
+  await gameStore.addGame(gamename.value);
+  await gameStore.getGames();
+  gamename.value = '';
+}
+
 
 </script>
 
