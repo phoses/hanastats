@@ -41,6 +41,7 @@ firebase-debug.*.log*
 
 # Firebase cache
 .firebase/
+/src/auth/*
 
 # Firebase config
 
