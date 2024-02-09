@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 
-export const matchStore = defineStore('match', () => {
+export const useMatchStore = defineStore('match', () => {
   const matches = ref([
     {
       home: ['op'],

@@ -1,17 +1,8 @@
-<script setup lang="ts">
-import { useGamesStore } from '@/stores/game';
-import { usePlayersStore } from '@/stores/player';
-
-const gameStore = useGamesStore();
-const playerStore = usePlayersStore();
-
-const { games } = gameStore;
-const { players } = playerStore;
-
-</script>
-
 <template>
-  <h2>players</h2>
+  <div class="d-flex">
+    <h2>players</h2>
+    <Button label="New" icon="pi pi-plus" />
+  </div>
   <ul>
     <li v-for="player in players" :key="player.id">
       {{ player.name }}
@@ -27,6 +18,19 @@ const { players } = playerStore;
 
 
 </template>
+
+<script setup lang="ts">
+import { useGamesStore } from '@/stores/game';
+import { usePlayersStore } from '@/stores/player';
+import Button from 'primevue/button';
+
+const gameStore = useGamesStore();
+const playerStore = usePlayersStore();
+
+const { games } = gameStore;
+const { players } = playerStore;
+
+</script>
 
 <style scoped>
 
