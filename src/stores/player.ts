@@ -18,7 +18,7 @@ export const usePlayersStore = defineStore('player', () => {
 
   async function getPlayers() {
     loadingStore.addLoader();
-    const snapshot = await get(child(dbRef, 'users/'));
+    const snapshot = await get(child(dbRef, 'players/'));
 
     if (snapshot.exists()) {
       players.value = _.map(_.keys(snapshot.val()), (id) => {
@@ -37,7 +37,7 @@ export const usePlayersStore = defineStore('player', () => {
   async function addplayer(player: string) {
     loadingStore.addLoader();
     if (!_.find(players.value, { username: player }) && player !== "") {
-      await push(fbRef(getDatabase(), 'users/'), {
+      await push(fbRef(getDatabase(), 'players/'), {
         username: player,
       });
     }

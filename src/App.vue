@@ -31,6 +31,8 @@
   import { GoogleAuthProvider, getAuth, signInWithPopup } from 'firebase/auth';
   import ProgressBar from 'primevue/progressbar';
   import { useLoadingStore } from './stores/loading';
+  import { useUserStore } from './stores/user';
+
   import 'primeicons/primeicons.css'
 
 
@@ -39,10 +41,18 @@
 
   const router = useRouter()
   const loadingStore = useLoadingStore();
+  const userStore = useUserStore();
 
   const isLoading = computed(() => loadingStore.isLoading());
 
-  // signInWithPopup(auth, provider)
+  //const login = await signInWithPopup(auth, provider)
+  //const credential = GoogleAuthProvider.credentialFromResult(login);
+
+  //console.log(login);
+  //console.log(credential);
+
+  //await userStore.addUser(login.user.uid);
+
   //   .then((result) => {
   //     console.log(result);
   //     const credential = GoogleAuthProvider.credentialFromResult(result);

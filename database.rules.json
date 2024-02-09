@@ -4,11 +4,15 @@
     ".write": false,
     "users": {
       ".read": true,
-      ".write": true
+      ".write": "true"
+    },
+    "players": {
+      ".read": true,
+      ".write": "root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
     "games": {
       ".read": true,
-      ".write": true
+      ".write": "root.child('users').child(auth.uid).child('role').val() === 'admin'"
     }
   }
 }
