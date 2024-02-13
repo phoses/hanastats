@@ -8,10 +8,10 @@
     </li>
   </ul>
 
-  <template v-if="userStore.currentUser?.role === 'admin'">
+  <div v-if="userStore.currentUser?.role === 'admin'" class="flex">
     <InputText type="text" v-model="playername" />
     <Button @click="addPlayer" icon="pi pi-plus" size="large"/>
-  </template>
+  </div>
 
   <h2>games</h2>
   <ul>
@@ -20,10 +20,10 @@
     </li>
   </ul>
 
-  <template v-if="userStore.currentUser?.role === 'admin'">
+  <div v-if="userStore.currentUser?.role === 'admin'" class="flex">
     <InputText type="text" v-model="gamename" />
     <Button @click="addGame" icon="pi pi-plus" size="large"/>
-  </template>
+  </div>
 
 </template>
 

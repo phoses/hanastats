@@ -1,13 +1,9 @@
 
 <template>
-  <div class="flex w-full justify-content-center">
-    <Menubar :model="items" breakpoint="50"/>
-  </div>
-
-  <ProgressBar v-if="isLoading" mode="indeterminate"/>
-
-  <div class="flex justify-content-center">
-    <div>
+  <div class="flex justify-content-center flex-wrap">
+    <div class="flex flex-column w-full sm:w-20rem">
+      <Menubar :model="items" breakpoint="50"/>
+      <ProgressBar v-if="isLoading" mode="indeterminate"/>
       <RouterView/>
     </div>
   </div>
@@ -46,19 +42,38 @@
   }
 
   const isLoading = computed(() => loadingStore.isLoading());
-  const items = computed(() => [
-    { label: 'stats', icon: PrimeIcons.CHART_BAR, command: () => router.push('/')},
-    ...(userStore.isAdmin ? [{ label: 'addgame', icon: PrimeIcons.PLUS, command: () => router.push('/addgame')}] : []),
-    { label: 'config', icon: PrimeIcons.PLUS_CIRCLE, command: () => router.push('/config')},
-    ...(!initializing.value ? [(userStore.isLogged ? { icon: PrimeIcons.SIGN_OUT, command: () => logout()} : { icon: PrimeIcons.SIGN_IN, command: () => login()})] : []) ,
-  ]);
+  const items = computed(() => {
+    const items: any[] = [
+    { label: 'stats', icon: PrimeIcons.CHART_BAR, command: () => router.push('/')}
+    ];
+
+    if (userStore.isAdmin) {
+      items.push({ label: 'addmatch', icon: PrimeIcons.PLUS_CIRCLE, command: () => router.push('/addmatch')});
+    }
+
+    if (!initializing.value) {
+      if (userStore.isLogged) {
+        items.push({
+          icon: PrimeIcons.COG,
+          items: [
+            { label: 'config', icon: PrimeIcons.DATABASE, command: () => router.push('/config')},
+            { label: 'logout', icon: PrimeIcons.SIGN_OUT, command: () => logout()},
+          ],
+        })
+      } else {
+        items.push({ icon: PrimeIcons.SIGN_IN, command: () => login()});
+      }
+    }
+
+    return items;
+  });
 
   </script>
 
 <style scoped>
 
-.pointer {
-  cursor: pointer;
+:deep(.p-menubar) {
+  padding: 0;
 }
 
 </style>
