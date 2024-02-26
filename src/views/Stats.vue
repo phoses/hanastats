@@ -15,6 +15,13 @@
         <Column field="losses" header="l"></Column>
         <Column field="overtimelosses" header="ot"></Column>
         <Column field="points" header="pts"></Column>
+        <Column field="goalsFor" header="gf"></Column>
+        <Column field="goalsAgainst" header="ga"></Column>
+        <Column field="goalsDiff" header="diff">
+          <template #body="slotProps">
+            {{ slotProps.data.goalsFor - slotProps.data.goalsAgainst }}
+          </template>
+        </Column>
         <Column field="playerPointsOfPercantage" header="p%"></Column>
       </DataTable>
     </AccordionTab>
@@ -177,6 +184,16 @@ const standings = computed(() => {
           return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore && match.overtime ||
           _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore && match.overtime;
         }).length * pointsForLosingAtOverTime,
+        goalsFor: _.sumBy(_.filter(filteredMatches.value, match => {
+          return _.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id);
+        }), match => {
+          return _.map(match.homePlayers, 'id').includes(player.id) ? match.homeScore : match.awayScore;
+        }),
+        goalsAgainst: _.sumBy(_.filter(filteredMatches.value, match => {
+          return _.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id);
+        }), match => {
+          return _.map(match.homePlayers, 'id').includes(player.id) ? match.awayScore : match.homeScore;
+        }),
         pointsPerMatch: (_.filter(filteredMatches.value, match => {
           return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore ||
           _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore;
@@ -247,6 +264,18 @@ const standings = computed(() => {
 :deep(.p-selectbutton .p-highlight) {
   background-color: white;
   color: #1c1c1c;
+}
+
+:deep(.p-datatable .p-column-header-content) {
+  display: block;
+}
+
+:deep(.p-datatable .p-datatable-thead > tr > th:not(:first-child)) {
+  text-align: right;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td:not(:first-child)) {
+  text-align: right;
 }
 
 </style>
