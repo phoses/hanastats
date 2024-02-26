@@ -67,6 +67,7 @@ import Dropdown from 'primevue/dropdown';
 import SelectButton from 'primevue/selectbutton';
 import InputNumber from 'primevue/inputnumber';
 import ToggleButton from 'primevue/togglebutton';
+import _ from 'lodash';
 
 const matchStore = useMatchStore();
 const gameStore = useGamesStore();
@@ -109,12 +110,8 @@ const clear = () => {
   selectedPlayers.value = [];
 };
 
-const shuffle = (array: Player[]) => {
-    return array.sort(() => Math.random() - 0.5);
-};
-
 watch(selectedPlayers, (newVal: Player[]) => {
-  const shuffled = shuffle(newVal);
+  const shuffled = _.shuffle(newVal);
   match.value.homePlayers = shuffled.slice(0, Math.ceil(shuffled.length / 2));
   match.value.awayPlayers = shuffled.slice(Math.ceil(shuffled.length / 2));
 });
