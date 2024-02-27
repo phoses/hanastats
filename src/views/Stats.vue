@@ -271,11 +271,11 @@ const standings = computed(() => {
 }
 
 :deep(.p-datatable .p-datatable-thead > tr > th:not(:first-child)) {
-  text-align: right;
+  text-align: center;
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr > td:not(:first-child)) {
-  text-align: right;
+  text-align: center;
 }
 
 </style>
