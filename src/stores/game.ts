@@ -22,11 +22,7 @@ export const useGamesStore = defineStore('game', () => {
       games.value = _.map(_.keys(snapshot.val()), (id) => {
         return {
           id,
-          name: snapshot.val()[id].name,
-          pointsForDraw: snapshot.val()[id].pointsForDraw,
-          pointsForWin: snapshot.val()[id].pointsForWin,
-          pointsForOTLose: snapshot.val()[id].pointsForOTLose,
-          pointsForOTWin: snapshot.val()[id].pointsForOTWin,
+          ...snapshot.val()[id],
         }
       });
     } else {

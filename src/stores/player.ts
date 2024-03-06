@@ -19,7 +19,7 @@ export const usePlayersStore = defineStore('player', () => {
       players.value = _.map(_.keys(snapshot.val()), (id) => {
         return {
           id,
-          username: snapshot.val()[id].username,
+          ...snapshot.val()[id],
         }
       });
     } else {
