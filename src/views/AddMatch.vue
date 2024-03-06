@@ -111,9 +111,23 @@ const clear = () => {
 };
 
 watch(selectedPlayers, (newVal: Player[]) => {
+  match.value.homePlayers = [];
+  match.value.awayPlayers = [];
   const shuffled = _.shuffle(newVal);
-  match.value.homePlayers = shuffled.slice(0, Math.ceil(shuffled.length / 2));
-  match.value.awayPlayers = shuffled.slice(Math.ceil(shuffled.length / 2));
+  _.forEach(shuffled, player => {
+    if (match.value.homePlayers.length < match.value.awayPlayers.length) {
+      match.value.homePlayers.push(player);
+    } else if (match.value.homePlayers.length > match.value.awayPlayers.length){
+      match.value.awayPlayers.push(player);
+    } else {
+      const random = Math.random() >= 0.5;
+      if (random) {
+        match.value.homePlayers.push(player);
+      } else {
+        match.value.awayPlayers.push(player);
+      }
+    }
+  });
 });
 
 async function addMatch() {

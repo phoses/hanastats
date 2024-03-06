@@ -5,6 +5,10 @@ import _ from 'lodash';
 export interface Game {
   id: string;
   name: string;
+  pointsForDraw: number;
+  pointsForWin: number;
+  pointsForOTLose: number;
+  pointsForOTWin: number;
 };
 
 export const useGamesStore = defineStore('game', () => {
@@ -19,6 +23,10 @@ export const useGamesStore = defineStore('game', () => {
         return {
           id,
           name: snapshot.val()[id].name,
+          pointsForDraw: snapshot.val()[id].pointsForDraw,
+          pointsForWin: snapshot.val()[id].pointsForWin,
+          pointsForOTLose: snapshot.val()[id].pointsForOTLose,
+          pointsForOTWin: snapshot.val()[id].pointsForOTWin,
         }
       });
     } else {
@@ -26,11 +34,9 @@ export const useGamesStore = defineStore('game', () => {
     }
   }
 
-  async function addGame(game: string) {
-    if (!_.find(games.value, { name: game }) && game !== "") {
-      await push(fbRef(getDatabase(), 'games/'), {
-        name: game,
-      });
+  async function addGame(game: Game) {
+    if (!_.find(games.value, { name: game.name }) && game.name !== "") {
+      await push(fbRef(getDatabase(), 'games/'), game);
     }
   }
 

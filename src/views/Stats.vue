@@ -55,18 +55,21 @@ import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import SelectButton from 'primevue/selectbutton';
 import moment from 'moment';
-import type { Game } from '@/stores/game';
+import { useGamesStore, type Game } from '@/stores/game';
 
 const matchStore = useMatchStore();
 const loadingStore = useLoadingStore();
+const gameStore = useGamesStore();
 
 const playerCountFilter = ref([] as { name: string, value: number }[]);
 const gameFilter = ref([] as Game[]);
+const games = computed(() => gameStore.games);
 
 onMounted(async () => {
   if (matches.value === null) {
     loadingStore.doLoading(async () => {
       await matchStore.getMatches();
+      await gameStore.getGames();
     });
   }
 });
@@ -76,13 +79,16 @@ const filteredMatches = computed(() => {
     return null;
   }
 
-  if (playerCountFilter.value.length === 0) {
-    return matchStore.matches;
-  }
-
   return _.chain(matchStore.matches)
     .filter(match => playerCountFilter.value.length === 0 || _.map(playerCountFilter.value, 'value').includes([...match.homePlayers, ...match.awayPlayers].length))
     .filter(match => gameFilter.value.length === 0 || gameFilter.value.map(g => g.id).includes(match.game!.id))
+    .map(match => {
+      return {
+        ...match,
+        game: _.find(games.value, g => g.id === match.game!.id),
+      }
+
+    })
     .value();
 });
 
@@ -133,6 +139,7 @@ const listOfPlayerCountOfMatches = computed(() => {
         value: count
       };
     })
+    .sortBy('value')
     .value();
 });
 
@@ -153,65 +160,53 @@ const standings = computed(() => {
   return _.chain(players)
     .map(player => {
 
-      const pointsForWin = 2;
-      const pointsForLosingAtOverTime = 1;
+      const matches = _.filter(filteredMatches.value, match => {
+        return _.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id);
+      });
+
+      const matchesWon = _.filter(filteredMatches.value, match => {
+        return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore ||
+        _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore;
+      });
+
+      const matchesLost = _.filter(filteredMatches.value, match => {
+        return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore ||
+        _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore;
+      });
+
+      const matchesOvertimeLost = _.filter(filteredMatches.value, match => {
+        return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore && match.overtime ||
+        _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore && match.overtime;
+      });
+
+      const matchesOvertimeWon = _.filter(filteredMatches.value, match => {
+        return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore && match.overtime ||
+        _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore && match.overtime;
+      });
+
+      const matchesDraw = _.filter(filteredMatches.value, match => {
+        return match.homeScore === match.awayScore && (_.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id));
+      });
+
+      const points = _.sumBy(matchesWon, match => match.overtime ? match.game?.pointsForOTWin! : match.game?.pointsForWin!) +
+        _.sumBy(matchesLost, match => match.overtime ? match.game?.pointsForOTLose! : 0) +
+        _.sumBy(matchesDraw, match => match.game?.pointsForDraw!);
 
       return {
         player: player.username,
-        wins: _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore;
-        }).length,
-        losses: _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore;
-        }).length,
-        matches: _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id);
-        }).length,
-        overtimewins: _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore && match.overtime ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore && match.overtime;
-        }).length,
-        overtimelosses: _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore && match.overtime ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore && match.overtime;
-        }).length,
-        points: _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore;
-        }).length * pointsForWin + _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore && match.overtime ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore && match.overtime;
-        }).length * pointsForLosingAtOverTime,
-        goalsFor: _.sumBy(_.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id);
-        }), match => {
+        wins: matchesWon.length,
+        losses: matchesLost.length,
+        draws: matchesDraw.length,
+        matches: matches.length,
+        overtimelosses: matchesOvertimeLost.length,
+        points: points,
+        goalsFor: _.sumBy(matches, match => {
           return _.map(match.homePlayers, 'id').includes(player.id) ? match.homeScore : match.awayScore;
         }),
-        goalsAgainst: _.sumBy(_.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id);
-        }), match => {
+        goalsAgainst: _.sumBy(matches, match => {
           return _.map(match.homePlayers, 'id').includes(player.id) ? match.awayScore : match.homeScore;
         }),
-        pointsPerMatch: (_.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore;
-        }).length * pointsForWin + _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore && match.overtime ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore && match.overtime;
-        }).length * pointsForLosingAtOverTime) / _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id);
-        }).length,
-        playerPointsOfPercantage: (_.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore;
-        }).length * pointsForWin + _.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore && match.overtime ||
-          _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore && match.overtime;
-        }).length * pointsForLosingAtOverTime) / (_.filter(filteredMatches.value, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id);
-        }).length * pointsForWin),
+        playerPointsOfPercantage: points / _.sumBy(matches, match => match.game?.pointsForWin!),
       };
     })
     .sortBy(['playerPointsOfPercantage', 'points'])

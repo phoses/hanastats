@@ -20,21 +20,37 @@
     </li>
   </ul>
 
-  <div v-if="userStore.currentUser?.role === 'admin'" class="flex">
-    <InputText type="text" v-model="gamename" />
-    <Button @click="addGame" icon="pi pi-plus" size="large"/>
-  </div>
+  <template v-if="userStore.currentUser?.role === 'admin'">
+    <h2>add game</h2>
 
+    <label>name</label>
+    <InputText type="text" v-model="game.name" />
+
+    <label class="mt-2">points for win</label>
+    <InputNumber type="text" v-model="game.pointsForWin" />
+
+    <label class="mt-2">points for draw</label>
+    <InputNumber type="text" v-model="game.pointsForDraw" />
+
+    <label class="mt-2">points for OT winner</label>
+    <InputNumber type="text" v-model="game.pointsForOTWin" />
+
+    <label class="mt-2">points for OT lose</label>
+    <InputNumber type="text" v-model="game.pointsForOTLose" />
+
+    <Button @click="addGame" class="mt-2" label="add game"/>
+  </template>
 </template>
 
 <script setup lang="ts">
-import { useGamesStore } from '@/stores/game';
+import { useGamesStore, type Game } from '@/stores/game';
 import { useLoadingStore } from '@/stores/loading';
 import { usePlayersStore } from '@/stores/player';
 import { useUserStore } from '@/stores/user';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { ref, onMounted, computed } from 'vue';
+import InputNumber from 'primevue/inputnumber';
 
 const gameStore = useGamesStore();
 const playerStore = usePlayersStore();
@@ -44,7 +60,7 @@ const loadingStore = useLoadingStore();
 const games = computed(() => gameStore.games);
 const players = computed(() => playerStore.players);
 const playername = ref('');
-const gamename = ref('');
+const game = ref({} as Game);
 
 onMounted(async () => {
   if (players.value === null) {
@@ -65,9 +81,9 @@ async function addPlayer() {
 
 async function addGame() {
   loadingStore.doLoading(async () => {
-    await gameStore.addGame(gamename.value);
+    await gameStore.addGame(game.value);
     await gameStore.getGames();
-    gamename.value = '';
+    game.value = {} as Game;
   });
 }
 
