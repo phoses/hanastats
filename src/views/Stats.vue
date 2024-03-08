@@ -28,7 +28,10 @@
 
     <AccordionTab header="matches">
       <div v-for="match in matches" :key="match.id" class="flex match justify-content-between mb-2">
-        <div class="flex-none mr-3">{{match.playedFormatted}}</div>
+        <div class="flex flex-column mr-3">
+          <div>{{match.playedFormatted}}</div>
+          <div v-if="match.game">{{match.game.name}}</div>
+        </div>
         <div class="flex flex-column align-content-start flex-grow-1">
           <div class="hometeam" :class="{'winner': match.homewinner}">{{ match.homePlayers.map(p => p.username).join(',') }}</div>
           <div>VS</div>
