@@ -5,6 +5,7 @@
     <AccordionTab header="filters">
       <SelectButton v-model="playerCountFilter" :options="listOfPlayerCountOfMatches" optionLabel="name" multiple />
       <SelectButton v-model="gameFilter" :options="distinctGames" optionLabel="name" multiple class="mt-3"/>
+      <ToggleButton v-model="standingsAsWholeTeam" onLabel="Whole teams" offLabel="Whole teams" class="mt-3"/>
     </AccordionTab>
 
     <AccordionTab header="standings">
@@ -59,6 +60,8 @@ import Column from 'primevue/column';
 import SelectButton from 'primevue/selectbutton';
 import moment from 'moment';
 import { useGamesStore, type Game } from '@/stores/game';
+import ToggleButton from 'primevue/togglebutton';
+import type { Player } from '@/stores/player';
 
 const matchStore = useMatchStore();
 const loadingStore = useLoadingStore();
@@ -66,6 +69,7 @@ const gameStore = useGamesStore();
 
 const playerCountFilter = ref([] as { name: string, value: number }[]);
 const gameFilter = ref([] as Game[]);
+const standingsAsWholeTeam = ref(false)
 const games = computed(() => gameStore.games);
 
 onMounted(async () => {
@@ -89,6 +93,8 @@ const filteredMatches = computed(() => {
       return {
         ...match,
         game: _.find(games.value, g => g.id === match.game!.id),
+        homePlayers: _.sortBy(match.homePlayers, 'id'),
+        awayPlayers: _.sortBy(match.awayPlayers, 'id'),
       }
 
     })
@@ -146,49 +152,61 @@ const listOfPlayerCountOfMatches = computed(() => {
     .value();
 });
 
+const teamContainsPlayer = (team: Player[], players: Player[]) =>{
+    if (standingsAsWholeTeam.value) {
+      return team.map(p => p.id).join(',') === players.map(p => p.id).join(',');
+    } else {
+      return team.map(p => p.id).includes(players[0].id);
+    }
+  }
+
 const standings = computed(() => {
   if (matchStore.matches === null) {
     return null;
   }
-
-  const players = _.uniqBy(_.flatMap(filteredMatches.value, match => {
-    return [...match.homePlayers, ...match.awayPlayers];
-  }), 'id');
 
   const percentageFormat = new Intl.NumberFormat('en-US', {
       minimumIntegerDigits: 1,
       minimumFractionDigits: 3
   });
 
-  return _.chain(players)
-    .map(player => {
+  const players = _.chain(filteredMatches.value)
+    .flatMap(match => {
+      return [...match.homePlayers, ...match.awayPlayers];
+    })
+    .uniqBy('id')
+    .map(player => [player])
+    .value();
+
+  const uniqueTeams = _.uniqBy([
+    ..._.map(filteredMatches.value, match => match.homePlayers),
+    ..._.map(filteredMatches.value, match => match.awayPlayers)
+  ], players => players.map(p => p.id).join(','));
+
+  return _.chain(standingsAsWholeTeam.value ? uniqueTeams : players)
+    .map(playerOrTeam => {
 
       const matches = _.filter(filteredMatches.value, match => {
-        return _.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id);
+        return teamContainsPlayer(match.homePlayers, playerOrTeam) || teamContainsPlayer(match.awayPlayers, playerOrTeam);
       });
 
-      const matchesWon = _.filter(filteredMatches.value, match => {
-        return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore ||
-        _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore;
+      const matchesWon = _.filter(matches, match => {
+        return teamContainsPlayer(match.homePlayers, playerOrTeam) && match.homeScore > match.awayScore ||
+        teamContainsPlayer(match.awayPlayers, playerOrTeam) && match.awayScore > match.homeScore;
       });
 
-      const matchesLost = _.filter(filteredMatches.value, match => {
-        return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore ||
-        _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore;
+      const matchesLost = _.filter(matches, match => {
+        return teamContainsPlayer(match.homePlayers, playerOrTeam) && match.homeScore < match.awayScore ||
+        teamContainsPlayer(match.awayPlayers, playerOrTeam) && match.awayScore < match.homeScore;
       });
 
-      const matchesOvertimeLost = _.filter(filteredMatches.value, match => {
-        return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore < match.awayScore && match.overtime ||
-        _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore < match.homeScore && match.overtime;
+      const matchesOvertimeLost = _.filter(matches, match => {
+        return teamContainsPlayer(match.homePlayers, playerOrTeam) && match.homeScore < match.awayScore && match.overtime ||
+        teamContainsPlayer(match.awayPlayers, playerOrTeam) && match.awayScore < match.homeScore && match.overtime;
       });
 
-      const matchesOvertimeWon = _.filter(filteredMatches.value, match => {
-        return _.map(match.homePlayers, 'id').includes(player.id) && match.homeScore > match.awayScore && match.overtime ||
-        _.map(match.awayPlayers, 'id').includes(player.id) && match.awayScore > match.homeScore && match.overtime;
-      });
-
-      const matchesDraw = _.filter(filteredMatches.value, match => {
-        return match.homeScore === match.awayScore && (_.map(match.homePlayers, 'id').includes(player.id) || _.map(match.awayPlayers, 'id').includes(player.id));
+      const matchesDraw = _.filter(matches, match => {
+        return match.homeScore === match.awayScore && (teamContainsPlayer(match.homePlayers, playerOrTeam) || teamContainsPlayer(match.awayPlayers, playerOrTeam));
       });
 
       const points = _.sumBy(matchesWon, match => match.overtime ? match.game?.pointsForOTWin! : match.game?.pointsForWin!) +
@@ -196,7 +214,7 @@ const standings = computed(() => {
         _.sumBy(matchesDraw, match => match.game?.pointsForDraw!);
 
       return {
-        player: player.username,
+        player: playerOrTeam.map(p => p.username).join(','),
         wins: matchesWon.length,
         losses: matchesLost.length,
         draws: matchesDraw.length,
@@ -204,10 +222,11 @@ const standings = computed(() => {
         overtimelosses: matchesOvertimeLost.length,
         points: points,
         goalsFor: _.sumBy(matches, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) ? match.homeScore : match.awayScore;
+          return teamContainsPlayer(match.homePlayers, playerOrTeam) ? match.homeScore : match.awayScore;
         }),
+
         goalsAgainst: _.sumBy(matches, match => {
-          return _.map(match.homePlayers, 'id').includes(player.id) ? match.awayScore : match.homeScore;
+          return teamContainsPlayer(match.homePlayers, playerOrTeam) ? match.awayScore : match.homeScore;
         }),
         playerPointsOfPercantage: points / _.sumBy(matches, match => match.game?.pointsForWin!),
       };
@@ -221,7 +240,8 @@ const standings = computed(() => {
       }
     })
     .value();
-});
+
+  });
 
 </script>
 
@@ -274,6 +294,11 @@ const standings = computed(() => {
 
 :deep(.p-datatable .p-datatable-tbody > tr > td:not(:first-child)) {
   text-align: center;
+}
+
+:deep(.p-togglebutton.p-highlight > .p-component) {
+  background-color: white;
+  color: #1c1c1c;
 }
 
 </style>
