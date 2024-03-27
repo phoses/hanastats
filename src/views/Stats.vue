@@ -9,7 +9,7 @@
     </AccordionTab>
 
     <AccordionTab header="standings">
-      <DataTable :value="standings">
+      <DataTable :value="standings" :rowClass="({tooFewPlayedMatches}) => tooFewPlayedMatches ? 'row-disabled' : undefined">
         <Column field="player" header="player"></Column>
         <Column field="matches" header="gp"></Column>
         <Column field="wins" header="w"></Column>
@@ -18,6 +18,7 @@
         <Column field="points" header="pts"></Column>
         <Column field="goalsFor" header="gf"></Column>
         <Column field="goalsAgainst" header="ga"></Column>
+        <Column field="playerOrTeamHasPlayedLessThanHalfTheMatches" header="a"></Column>
         <Column field="goalsDiff" header="diff">
           <template #body="slotProps">
             {{ slotProps.data.goalsFor - slotProps.data.goalsAgainst }}
@@ -213,6 +214,8 @@ const standings = computed(() => {
         _.sumBy(matchesLost, match => match.overtime ? match.game?.pointsForOTLose! : 0) +
         _.sumBy(matchesDraw, match => match.game?.pointsForDraw!);
 
+      const averagePlayedGamesByPlayerOrTeam = _.size(filteredMatches.value) / (standingsAsWholeTeam.value ? uniqueTeams.length : players.length);
+
       return {
         player: playerOrTeam.map(p => p.username).join(','),
         wins: matchesWon.length,
@@ -229,6 +232,7 @@ const standings = computed(() => {
           return teamContainsPlayer(match.homePlayers, playerOrTeam) ? match.awayScore : match.homeScore;
         }),
         playerPointsOfPercantage: points / _.sumBy(matches, match => match.game?.pointsForWin!),
+        tooFewPlayedMatches: matches.length < averagePlayedGamesByPlayerOrTeam,
       };
     })
     .sortBy(['playerPointsOfPercantage', 'points'])
@@ -299,6 +303,10 @@ const standings = computed(() => {
 :deep(.p-togglebutton.p-highlight > .p-component) {
   background-color: white;
   color: #1c1c1c;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr.row-disabled) {
+  color: #ffaaaa;
 }
 
 </style>
