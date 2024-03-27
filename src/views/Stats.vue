@@ -9,7 +9,7 @@
     </AccordionTab>
 
     <AccordionTab header="standings">
-      <DataTable :value="standings">
+      <DataTable :value="standings" :rowClass="({validResult}) => !validResult ? 'row-disabled' : undefined">
         <Column field="player" header="player"></Column>
         <Column field="matches" header="gp"></Column>
         <Column field="wins" header="w"></Column>
@@ -23,6 +23,7 @@
             {{ slotProps.data.goalsFor - slotProps.data.goalsAgainst }}
           </template>
         </Column>
+        <Column field="loseOrWinStreakLatestStreakSameType" header="s"></Column>
         <Column field="playerPointsOfPercantage" header="p%"></Column>
       </DataTable>
     </AccordionTab>
@@ -213,6 +214,22 @@ const standings = computed(() => {
         _.sumBy(matchesLost, match => match.overtime ? match.game?.pointsForOTLose! : 0) +
         _.sumBy(matchesDraw, match => match.game?.pointsForDraw!);
 
+      const averagePlayedGamesByPlayerOrTeam = _.size(filteredMatches.value) / (standingsAsWholeTeam.value ? uniqueTeams.length : players.length);
+
+      const teamOrPlayerLoseAndWinStreak = _.chain(matches)
+        .sortBy('played')
+        .reverse()
+        .take(5)
+        .map(match => {
+          return teamContainsPlayer(match.homePlayers, playerOrTeam) && match.homeScore > match.awayScore ||
+            teamContainsPlayer(match.awayPlayers, playerOrTeam) && match.awayScore > match.homeScore;
+        })
+        .map(result => result ? 'W' : 'L')
+        .join('')
+        .value();
+
+      const loseOrWinStreakLatestStreakSameType = teamOrPlayerLoseAndWinStreak.match(/(W+|L+)/g)?.[0] || '';
+
       return {
         player: playerOrTeam.map(p => p.username).join(','),
         wins: matchesWon.length,
@@ -229,9 +246,12 @@ const standings = computed(() => {
           return teamContainsPlayer(match.homePlayers, playerOrTeam) ? match.awayScore : match.homeScore;
         }),
         playerPointsOfPercantage: points / _.sumBy(matches, match => match.game?.pointsForWin!),
+        validResult: matches.length > averagePlayedGamesByPlayerOrTeam,
+        loseOrWinStreakLatestStreakSameType: loseOrWinStreakLatestStreakSameType.length + loseOrWinStreakLatestStreakSameType[0].charAt(0)
+
       };
     })
-    .sortBy(['playerPointsOfPercantage', 'points'])
+    .sortBy(['validResult', 'playerPointsOfPercantage', 'points'])
     .reverse()
     .map(standing => {
       return {
@@ -299,6 +319,10 @@ const standings = computed(() => {
 :deep(.p-togglebutton.p-highlight > .p-component) {
   background-color: white;
   color: #1c1c1c;
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr.row-disabled) {
+  color: #ffaaaa;
 }
 
 </style>
