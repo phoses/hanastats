@@ -28,10 +28,16 @@
       </DataTable>
     </AccordionTab>
 
-    <AccordionTab header="matches">
+    <AccordionTab>
+      <template #header>
+        <span class="pr-2">matches</span>
+        <span v-if="matches">({{ matches.length }})</span>
+      </template>
+
       <div v-for="match in matches" :key="match.id" class="flex match justify-content-between mb-2">
         <div class="flex flex-column mr-3">
           <div>{{match.playedFormatted}}</div>
+
           <div v-if="match.game">{{match.game.name}}</div>
         </div>
         <div class="flex flex-column align-content-start flex-grow-1">
@@ -43,6 +49,18 @@
           <div>{{ match.homeScore }}:{{ match.awayScore }}</div>
           <div class="w-2rem"><span v-if="match.overtime">(OT)</span></div>
         </div>
+      </div>
+    </AccordionTab>
+
+    <AccordionTab header="miscallenous">
+      <div>
+        <div>Matches: {{ miscallenousStatistics.matches }}</div>
+        <div>Players: {{ miscallenousStatistics.players }}</div>
+        <div>Unique teams: {{ miscallenousStatistics.teams }}</div>
+        <div>Home team win percentage: {{ miscallenousStatistics.homeTeamWinPercentage }}</div>
+        <div>1 player team win %: {{ miscallenousStatistics.onePlayerTeamWinPercentage }}</div>
+        <div>2 player team win %: {{ miscallenousStatistics.twoPlayerTeamWinPercentage }}</div>
+        <div>3 player team win %: {{ miscallenousStatistics.threePlayerTeamWinPercentage }}</div>
       </div>
     </AccordionTab>
   </Accordion>
@@ -161,30 +179,34 @@ const teamContainsPlayer = (team: Player[], players: Player[]) =>{
     }
   }
 
-const standings = computed(() => {
-  if (matchStore.matches === null) {
-    return null;
-  }
+const percentageFormat = new Intl.NumberFormat('en-US', {
+    minimumIntegerDigits: 1,
+    minimumFractionDigits: 3
+});
 
-  const percentageFormat = new Intl.NumberFormat('en-US', {
-      minimumIntegerDigits: 1,
-      minimumFractionDigits: 3
-  });
-
-  const players = _.chain(filteredMatches.value)
+const players = computed(() => {
+  return _.chain(filteredMatches.value)
     .flatMap(match => {
       return [...match.homePlayers, ...match.awayPlayers];
     })
     .uniqBy('id')
     .map(player => [player])
     .value();
+  });
 
-  const uniqueTeams = _.uniqBy([
+const uniqueTeams = computed(() => {
+  return _.uniqBy([
     ..._.map(filteredMatches.value, match => match.homePlayers),
     ..._.map(filteredMatches.value, match => match.awayPlayers)
   ], players => players.map(p => p.id).join(','));
+});
 
-  return _.chain(standingsAsWholeTeam.value ? uniqueTeams : players)
+const standings = computed(() => {
+  if (matchStore.matches === null) {
+    return null;
+  }
+
+  return _.chain(standingsAsWholeTeam.value ? uniqueTeams.value : players.value)
     .map(playerOrTeam => {
 
       const matches = _.filter(filteredMatches.value, match => {
@@ -214,7 +236,7 @@ const standings = computed(() => {
         _.sumBy(matchesLost, match => match.overtime ? match.game?.pointsForOTLose! : 0) +
         _.sumBy(matchesDraw, match => match.game?.pointsForDraw!);
 
-      const averagePlayedGamesByPlayerOrTeam = _.size(filteredMatches.value) / (standingsAsWholeTeam.value ? uniqueTeams.length : players.length);
+      const averagePlayedGamesByPlayerOrTeam = _.size(filteredMatches.value) / (standingsAsWholeTeam.value ? uniqueTeams.value.length : players.value.length);
 
       const teamOrPlayerLoseAndWinStreak = _.chain(matches)
         .sortBy('played')
@@ -262,6 +284,33 @@ const standings = computed(() => {
     .value();
 
   });
+
+  const miscallenousStatistics = computed(() => {
+    return {
+      matches: _.size(filteredMatches.value),
+      players: _.size(players.value),
+      teams: _.size(uniqueTeams.value),
+      homeTeamWinPercentage: _.chain(filteredMatches.value)
+        .filter(match => match.homeScore > match.awayScore)
+        .size()
+        .thru(val=> val / _.size(filteredMatches.value) * 100)
+        .thru(val => val.toFixed(0) + '%' )
+        .value(),
+      onePlayerTeamWinPercentage: matchesWhichHaveWonSpecificPlayerCount(1),
+      twoPlayerTeamWinPercentage: matchesWhichHaveWonSpecificPlayerCount(2),
+      threePlayerTeamWinPercentage: matchesWhichHaveWonSpecificPlayerCount(3),
+    }
+
+  });
+
+  const matchesWhichHaveWonSpecificPlayerCount = (playerCount: number) => {
+    return _.chain(filteredMatches.value)
+      .filter(match => (match.homePlayers.length === playerCount && match.homeScore > match.awayScore) || (match.awayPlayers.length === playerCount && match.homeScore < match.awayScore))
+      .size()
+      .thru(val=> val / _.size(filteredMatches.value) * 100)
+      .thru(val => val.toFixed(0) + '%' )
+      .value();
+  };
 
 </script>
 
