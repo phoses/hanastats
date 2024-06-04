@@ -6,6 +6,7 @@
       <SelectButton v-model="playerCountFilter" :options="listOfPlayerCountOfMatches" optionLabel="name" multiple />
       <SelectButton v-model="gameFilter" :options="distinctGames" optionLabel="name" multiple class="mt-3"/>
       <ToggleButton v-model="standingsAsWholeTeam" onLabel="Whole teams" offLabel="Whole teams" class="mt-3"/>
+      <SelectButton v-model="playersInSameTeam" :options="allPlayers" optionLabel="username" multiple class="mt-3"/>
     </AccordionTab>
 
     <AccordionTab header="standings">
@@ -80,22 +81,26 @@ import SelectButton from 'primevue/selectbutton';
 import moment from 'moment';
 import { useGamesStore, type Game } from '@/stores/game';
 import ToggleButton from 'primevue/togglebutton';
-import type { Player } from '@/stores/player';
+import { usePlayersStore, type Player } from '@/stores/player';
 
 const matchStore = useMatchStore();
 const loadingStore = useLoadingStore();
 const gameStore = useGamesStore();
+const playerStore = usePlayersStore();
 
 const playerCountFilter = ref([] as { name: string, value: number }[]);
 const gameFilter = ref([] as Game[]);
 const standingsAsWholeTeam = ref(false)
+const playersInSameTeam = ref([] as Player[]);
 const games = computed(() => gameStore.games);
+const allPlayers = computed(() => playerStore.players);
 
 onMounted(async () => {
   if (matches.value === null) {
     loadingStore.doLoading(async () => {
       await matchStore.getMatches();
       await gameStore.getGames();
+      await playerStore.getPlayers();
     });
   }
 });
@@ -108,6 +113,7 @@ const filteredMatches = computed(() => {
   return _.chain(matchStore.matches)
     .filter(match => playerCountFilter.value.length === 0 || _.map(playerCountFilter.value, 'value').includes([...match.homePlayers, ...match.awayPlayers].length))
     .filter(match => gameFilter.value.length === 0 || gameFilter.value.map(g => g.id).includes(match.game!.id))
+    .filter(match => playersInSameTeam.value.length === 0 || playersInSameTeam.value.every(player => match.homePlayers.map(p => p.id).includes(player.id)) || playersInSameTeam.value.every(player => match.awayPlayers.map(p => p.id).includes(player.id)))
     .map(match => {
       return {
         ...match,
