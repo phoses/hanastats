@@ -2,7 +2,7 @@
   <h2>add new match</h2>
 
   <h3>game</h3>
-  <Dropdown v-model="match.game" :options="games" optionLabel="name" placeholder="Select game" />
+  <Dropdown v-model="match.game" :options="games" optionLabel="name" placeholder="Select game" :scrollHeight="gamesScrollHeightPx" />
 
   <template v-if="match.game !== null">
     <h3>players</h3>
@@ -73,7 +73,7 @@ const matchStore = useMatchStore();
 const gameStore = useGamesStore();
 const playerStore = usePlayersStore();
 const loadingStore = useLoadingStore();
-const games = computed(() => gameStore.games);
+const games = computed(() => _.reverse(_.sortBy(gameStore.games, 'id')));
 const players = computed(() => playerStore.players);
 
 const match = ref({
@@ -136,6 +136,10 @@ async function addMatch() {
     clear();
   });
 }
+
+const gamesScrollHeightPx = computed(() => {
+  return games.value.length * 50 + 'px';
+});
 
 </script>
 
