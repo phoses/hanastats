@@ -1,7 +1,7 @@
 
 <template>
   <div class="flex justify-content-center flex-wrap">
-    <div class="flex flex-column w-full sm:w-20rem">
+    <div class="flex flex-column w-full sm:w-30rem">
       <Menubar :model="items" breakpoint="50"/>
       <ProgressBar v-if="isLoading" mode="indeterminate"/>
       <RouterView/>
