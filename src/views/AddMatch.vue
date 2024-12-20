@@ -6,57 +6,36 @@
 
   <template v-if="match.game !== null">
 
-    <h3>players</h3>
+    <h3 class="mt-5">players</h3>
     <div class="mb-3">
       <label for="fixedteams" class="mr-2">fixed teams</label><Checkbox v-model="fixedTeams" binary inputId="fixedteams"/>
     </div>
     <SelectButton v-model="selectedPlayers" :options="players" optionLabel="username" multiple/>
   </template>
 
-  <template v-if="selectedPlayers.length > 0">
-    <h3>teams</h3>
-
-    home: {{ match.homePlayers.map(p => p.username).join(', ') }} <br/>
-    away: {{ match.awayPlayers.map(p => p.username).join(', ') }}
-
-    <h3 v-if="selectedPlayers.length > 0">score</h3>
+  <template v-if="selectedPlayers.length > 1">
+    <h3 v-if="selectedPlayers.length > 0" class="mt-5">teams</h3>
 
     <div class="flex gap-7">
-      <div>
-        <div>home</div>
-        <InputNumber v-model="match.homeScore" showButtons buttonLayout="vertical" style="width: 3rem" :min="0" :max="99">
-          <template #incrementbuttonicon>
-              <span class="pi pi-plus" />
-          </template>
-          <template #decrementbuttonicon>
-              <span class="pi pi-minus" />
-          </template>
-        </InputNumber>
-      </div>
-
-      <div>
-        <div>away</div>
-        <InputNumber v-model="match.awayScore" showButtons buttonLayout="vertical" style="width: 3rem" :min="0" :max="99">
-          <template #incrementbuttonicon>
-              <span class="pi pi-plus" />
-          </template>
-          <template #decrementbuttonicon>
-              <span class="pi pi-minus" />
-          </template>
-        </InputNumber>
-      </div>
+      <TeamScore v-model="match.homeScore" class="w-10rem">
+        <template #teamName>home</template>
+        <template #team>{{ match.homePlayers.map(p => p.username).join(', ') }}</template>
+      </TeamScore>
+      <TeamScore v-model="match.awayScore" class="w-10rem">
+        <template #teamName>away</template>
+        <template #team>{{ match.awayPlayers.map(p => p.username).join(', ') }}</template>
+      </TeamScore>
     </div>
 
-    <h3>overtime</h3>
-
-    <ToggleButton v-model="match.overtime" onLabel="yes" offLabel="no"/>
+    <div class="mt-4">
+      <label for="overtime" class="mr-2">overtime win</label><Checkbox v-model="match.overtime" binary inputId="overtime"/>
+    </div>
 
     <div>
       <Button @click="addMatch" label="add match" class="mt-5"/>
     </div>
 
   </template>
-
 
 </template>
 
@@ -69,9 +48,8 @@ import Button from 'primevue/button';
 import { ref, onMounted, computed, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import SelectButton from 'primevue/selectbutton';
-import InputNumber from 'primevue/inputnumber';
-import ToggleButton from 'primevue/togglebutton';
 import Checkbox from 'primevue/checkbox';
+import TeamScore from '../components/TeamScore.vue';
 import _ from 'lodash';
 
 const matchStore = useMatchStore();
