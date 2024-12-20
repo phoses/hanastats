@@ -5,7 +5,11 @@
   <Dropdown v-model="match.game" :options="games" optionLabel="name" placeholder="Select game" :scrollHeight="gamesScrollHeightPx" />
 
   <template v-if="match.game !== null">
+
     <h3>players</h3>
+    <div class="mb-3">
+      <label for="fixedteams" class="mr-2">fixed teams</label><Checkbox v-model="fixedTeams" binary inputId="fixedteams"/>
+    </div>
     <SelectButton v-model="selectedPlayers" :options="players" optionLabel="username" multiple/>
   </template>
 
@@ -67,13 +71,18 @@ import Dropdown from 'primevue/dropdown';
 import SelectButton from 'primevue/selectbutton';
 import InputNumber from 'primevue/inputnumber';
 import ToggleButton from 'primevue/togglebutton';
+import Checkbox from 'primevue/checkbox';
 import _ from 'lodash';
 
 const matchStore = useMatchStore();
 const gameStore = useGamesStore();
 const playerStore = usePlayersStore();
 const loadingStore = useLoadingStore();
-const games = computed(() => _.reverse(_.sortBy(gameStore.games, 'id')));
+const games = computed(() => _.chain(gameStore.games)
+  .filter(game => !game.disabled)
+  .sortBy('id')
+  .reverse()
+  .value());
 const players = computed(() => playerStore.players);
 
 const match = ref({
@@ -86,6 +95,7 @@ const match = ref({
   } as Match);
 
 const selectedPlayers = ref([]);
+const fixedTeams = ref(false);
 
 onMounted(async () => {
   clear();
@@ -111,23 +121,31 @@ const clear = () => {
 };
 
 watch(selectedPlayers, (newVal: Player[]) => {
-  match.value.homePlayers = [];
-  match.value.awayPlayers = [];
-  const shuffled = _.shuffle(newVal);
-  _.forEach(shuffled, player => {
-    if (match.value.homePlayers.length < match.value.awayPlayers.length) {
-      match.value.homePlayers.push(player);
-    } else if (match.value.homePlayers.length > match.value.awayPlayers.length){
-      match.value.awayPlayers.push(player);
+  if (fixedTeams.value) {
+    if (match.value.homePlayers.length === match.value.awayPlayers.length) {
+      match.value.homePlayers.push(newVal[newVal.length - 1]);
     } else {
-      const random = Math.random() >= 0.5;
-      if (random) {
-        match.value.homePlayers.push(player);
-      } else {
-        match.value.awayPlayers.push(player);
-      }
+      match.value.awayPlayers.push(newVal[newVal.length - 1]);
     }
-  });
+  } else {
+    match.value.homePlayers = [];
+    match.value.awayPlayers = [];
+    const shuffled = _.shuffle(newVal);
+    _.forEach(shuffled, player => {
+      if (match.value.homePlayers.length < match.value.awayPlayers.length) {
+        match.value.homePlayers.push(player);
+      } else if (match.value.homePlayers.length > match.value.awayPlayers.length){
+        match.value.awayPlayers.push(player);
+      } else {
+        const random = Math.random() >= 0.5;
+        if (random) {
+          match.value.homePlayers.push(player);
+        } else {
+          match.value.awayPlayers.push(player);
+        }
+      }
+    });
+  }
 });
 
 async function addMatch() {

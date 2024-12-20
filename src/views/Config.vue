@@ -14,11 +14,11 @@
   </div>
 
   <h2>games</h2>
-  <ul>
-    <li v-for="game in games" :key="game.id">
-      {{ game.name }}
-    </li>
-  </ul>
+  <div v-for="game in games" :key="game.id" class="flex mb-3">
+    <div class="name">{{ game.name }}</div>
+    <Button v-if="!game.disabled" label="disable" @click="changeStatus(game, { disabled: true })" class="p-button-danger p-button-text p-0"/>
+    <Button v-if="game.disabled" label="enable" @click="changeStatus(game, { disabled: false })" class="p-button-text p-0"/>
+  </div>
 
   <template v-if="userStore.currentUser?.role === 'admin'">
     <h2>add game</h2>
@@ -87,9 +87,19 @@ async function addGame() {
   });
 }
 
+async function changeStatus(game: Game, newStatus: { disabled: boolean }) {
+  loadingStore.doLoading(async () => {
+    await gameStore.updateGame({ ...game, ...newStatus });
+    await gameStore.getGames();
+  });
+}
+
 
 </script>
 
 <style scoped>
 
+  .name {
+    width: 7rem;
+  }
 </style>

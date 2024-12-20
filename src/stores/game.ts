@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
-import { getDatabase, ref as fbRef, get, child, push } from "firebase/database";
+import { getDatabase, ref as fbRef, get, child, push, update } from "firebase/database";
 import _ from 'lodash';
 export interface Game {
   id: string;
@@ -9,6 +9,7 @@ export interface Game {
   pointsForWin: number;
   pointsForOTLose: number;
   pointsForOTWin: number;
+  disabled: boolean;
 };
 
 export const useGamesStore = defineStore('game', () => {
@@ -36,5 +37,15 @@ export const useGamesStore = defineStore('game', () => {
     }
   }
 
-  return { games, getGames, addGame }
+  async function updateGame(game: Game) {
+    const dataBaseRefGame = {
+      [game.id]: {
+        ..._.omit(game, 'id'),
+      }
+    }
+
+    await update(fbRef(getDatabase(), 'games/'), dataBaseRefGame);
+  }
+
+  return { games, getGames, addGame, updateGame };
 })
