@@ -3,22 +3,28 @@
 
   <Accordion :multiple="true" :activeIndex="[1, 2]">
     <AccordionTab header="filters">
-      <SelectButton v-model="playerCountFilter" :options="listOfPlayerCountOfMatches" optionLabel="name" multiple />
-      <SelectButton v-model="gameFilter" :options="distinctGames" optionLabel="name" multiple class="mt-3"/>
+      <SelectButton v-model="gameFilter" :options="distinctGames" optionLabel="name" multiple/>
+      <SelectButton v-model="playerCountFilter" :options="listOfPlayerCountOfMatches" optionLabel="name" multiple class="mt-3"/>
       <ToggleButton v-model="standingsAsWholeTeam" onLabel="Whole teams" offLabel="Whole teams" class="mt-3"/>
       <SelectButton v-model="playersInSameTeam" :options="allPlayers" optionLabel="username" multiple class="mt-3"/>
     </AccordionTab>
 
-    <AccordionTab header="standings">
+    <AccordionTab>
+      <template #header >
+        <div onclick="event.stopPropagation();" class="flex align-items-center">
+          standings
+          <SelectButton class="ml-3 quickfilter" v-model="enabledGamesFilter" :options="enabledGames" optionLabel="name" multiple/>
+        </div>
+      </template>
       <DataTable :value="standings" :rowClass="({validResult}) => !validResult ? 'row-disabled' : undefined">
         <Column field="player" header="player"></Column>
         <Column field="matches" header="gp"></Column>
         <Column field="wins" header="w"></Column>
         <Column field="losses" header="l"></Column>
-        <Column field="overtimelosses" header="ot"></Column>
-        <Column field="points" header="pts"></Column>
-        <Column field="goalsFor" header="gf"></Column>
-        <Column field="goalsAgainst" header="ga"></Column>
+        <!-- <Column field="overtimelosses" header="ot"></Column> -->
+        <!-- <Column field="points" header="pts"></Column> -->
+        <!-- <Column field="goalsFor" header="gf"></Column> -->
+        <!-- <Column field="goalsAgainst" header="ga"></Column> -->
         <Column field="goalsDiff" header="diff">
           <template #body="slotProps">
             {{ slotProps.data.goalsFor - slotProps.data.goalsAgainst }}
@@ -90,6 +96,7 @@ const playerStore = usePlayersStore();
 
 const playerCountFilter = ref([] as { name: string, value: number }[]);
 const gameFilter = ref([] as Game[]);
+const enabledGamesFilter = ref([] as Game[]);
 const standingsAsWholeTeam = ref(false)
 const playersInSameTeam = ref([] as Player[]);
 const games = computed(() => gameStore.games);
@@ -113,6 +120,7 @@ const filteredMatches = computed(() => {
   return _.chain(matchStore.matches)
     .filter(match => playerCountFilter.value.length === 0 || _.map(playerCountFilter.value, 'value').includes([...match.homePlayers, ...match.awayPlayers].length))
     .filter(match => gameFilter.value.length === 0 || gameFilter.value.map(g => g.id).includes(match.game!.id))
+    .filter(match => enabledGamesFilter.value.length === 0 || enabledGamesFilter.value.map(g => g.id).includes(match.game!.id))
     .filter(match => playersInSameTeam.value.length === 0 || playersInSameTeam.value.every(player => match.homePlayers.map(p => p.id).includes(player.id)) || playersInSameTeam.value.every(player => match.awayPlayers.map(p => p.id).includes(player.id)))
     .map(match => {
       return {
@@ -136,6 +144,10 @@ const distinctGames = computed(() => {
     .uniqBy('id')
     .value();
 });
+
+const enabledGames = computed(() => {
+  return _.filter(games.value, game => !game.disabled);
+})
 
 const matches = computed(() => {
   if (matchStore.matches === null) {
@@ -247,7 +259,6 @@ const standings = computed(() => {
       const teamOrPlayerLoseAndWinStreak = _.chain(matches)
         .sortBy('played')
         .reverse()
-        .take(5)
         .map(match => {
           return teamContainsPlayer(match.homePlayers, playerOrTeam) && match.homeScore > match.awayScore ||
             teamContainsPlayer(match.awayPlayers, playerOrTeam) && match.awayScore > match.homeScore;
@@ -378,6 +389,10 @@ const standings = computed(() => {
 
 :deep(.p-datatable .p-datatable-tbody > tr.row-disabled) {
   color: #ffaaaa;
+}
+
+.quickfilter :deep(.p-button) {
+  padding: 0;
 }
 
 </style>

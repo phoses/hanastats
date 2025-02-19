@@ -6,10 +6,12 @@
     <div class="mb-3">
       <slot name="team"/>
     </div>
-    <div class="flex">
-      <Button @click="incrementScore" icon="pi pi-plus"/>
-      <div class="mx-3 text-5xl">{{ model }}</div>
-      <Button @click="decrementScore" icon="pi pi-minus"/>
+    <div class="w-full flex flex-column">
+      <div class="text-4xl mb-3">{{ model }}</div>
+      <div class="flex justify-content-center">
+        <Button @click="incrementScore" icon="pi pi-plus"/>
+        <Button @click="decrementScore" icon="pi pi-minus" class="ml-4"/>
+      </div>
     </div>
   </div>
 </template>

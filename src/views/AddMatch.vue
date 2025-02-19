@@ -1,41 +1,43 @@
 <template>
-  <h2>add new match</h2>
+  <div class="text-center">
+    <h2>add new match</h2>
 
-  <h3>game</h3>
-  <Dropdown v-model="match.game" :options="games" optionLabel="name" placeholder="Select game" :scrollHeight="gamesScrollHeightPx" />
+    <h3>game
+      <Dropdown v-model="match.game" :options="games" optionLabel="name" placeholder="Select game" :scrollHeight="gamesScrollHeightPx" />
+    </h3>
 
-  <template v-if="match.game !== null">
+    <template v-if="match.game !== null">
 
-    <h3 class="mt-5">players</h3>
-    <div class="mb-3">
-      <label for="fixedteams" class="mr-2">fixed teams</label><Checkbox v-model="fixedTeams" binary inputId="fixedteams"/>
-    </div>
-    <SelectButton v-model="selectedPlayers" :options="players" optionLabel="username" multiple/>
-  </template>
+      <h3 class="mt-5">players</h3>
+      <div class="mb-3">
+        <label for="fixedteams" class="mr-2">fixed teams</label><Checkbox v-model="fixedTeams" binary inputId="fixedteams"/>
+      </div>
+      <SelectButton v-model="selectedPlayers" :options="players" optionLabel="username" multiple/>
+    </template>
 
-  <template v-if="selectedPlayers.length > 1">
-    <h3 v-if="selectedPlayers.length > 0" class="mt-5">teams</h3>
+    <template v-if="selectedPlayers.length > 1">
+      <h3 v-if="selectedPlayers.length > 0" class="mt-5">teams</h3>
 
-    <div class="flex gap-7">
-      <TeamScore v-model="match.homeScore" class="w-10rem">
-        <template #teamName>home</template>
-        <template #team>{{ match.homePlayers.map(p => p.username).join(', ') }}</template>
-      </TeamScore>
-      <TeamScore v-model="match.awayScore" class="w-10rem">
-        <template #teamName>away</template>
-        <template #team>{{ match.awayPlayers.map(p => p.username).join(', ') }}</template>
-      </TeamScore>
-    </div>
+      <div class="flex">
+        <TeamScore v-model="match.homeScore" class="w-6">
+          <template #teamName>home</template>
+          <template #team>{{ match.homePlayers.map(p => p.username).join(', ') }}</template>
+        </TeamScore>
+        <TeamScore v-model="match.awayScore" class="w-6">
+          <template #teamName>away</template>
+          <template #team>{{ match.awayPlayers.map(p => p.username).join(', ') }}</template>
+        </TeamScore>
+      </div>
 
-    <div class="mt-4">
-      <label for="overtime" class="mr-2">overtime win</label><Checkbox v-model="match.overtime" binary inputId="overtime"/>
-    </div>
+      <div class="mt-5">
+        <label for="overtime" class="mr-2">overtime win</label><Checkbox v-model="match.overtime" binary inputId="overtime"/>
+      </div>
 
-    <div>
-      <Button @click="addMatch" label="add match" class="mt-5"/>
-    </div>
-
-  </template>
+      <div>
+        <Button @click="addMatch" label="add match" class="mt-5"/>
+      </div>
+    </template>
+  </div>
 
 </template>
 
