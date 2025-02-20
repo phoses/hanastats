@@ -16,22 +16,66 @@
           <SelectButton class="ml-3 quickfilter" v-model="enabledGamesFilter" :options="enabledGames" optionLabel="name" multiple/>
         </div>
       </template>
-      <DataTable :value="standings" :rowClass="({validResult}) => !validResult ? 'row-disabled' : undefined">
-        <Column field="player" header="player"></Column>
+
+      <DataTable
+        v-model:expandedRows="expandedRows"
+        :value="standings"
+        :rowClass="({validResult}) => !validResult ? 'row-disabled' : undefined"
+        dataKey="player">
+        <!-- <Column expander style="width: 5rem" /> -->
+        <Column field="player" header="player">
+          <template #body="slotProps">
+            <Button class="p-0 py-1 text-left" link :label="slotProps.data.player" @click.stop="onRowExpand(slotProps.data.player)" />
+          </template>
+        </Column>
         <Column field="matches" header="gp"></Column>
         <Column field="wins" header="w"></Column>
         <Column field="losses" header="l"></Column>
-        <!-- <Column field="overtimelosses" header="ot"></Column> -->
-        <!-- <Column field="points" header="pts"></Column> -->
-        <!-- <Column field="goalsFor" header="gf"></Column> -->
-        <!-- <Column field="goalsAgainst" header="ga"></Column> -->
-        <Column field="goalsDiff" header="diff">
+        <Column field="goalsDiff" header="diff"></Column>
+        <Column field="loseOrWinStreakLatestStreak" header="s">
           <template #body="slotProps">
-            {{ slotProps.data.goalsFor - slotProps.data.goalsAgainst }}
+            {{ slotProps.data.loseOrWinStreakLatestStreak + slotProps.data.loseOrWinStreakLatestStreakType }}
           </template>
         </Column>
-        <Column field="loseOrWinStreakLatestStreakSameType" header="s"></Column>
+        <Column field="loseOrWinStreakLatestStreakType" header="f">
+          <template #body="slotProps">
+            <template v-if="slotProps.data.loseOrWinStreakLatestStreak > 4">
+              <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'W'">🔥</span>
+              <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'L'">❄️</span>
+            </template>
+          </template>
+        </Column>
         <Column field="playerPointsOfPercantage" header="p%"></Column>
+        <template #expansion="slotProps">
+          <div class="py-2">
+            Games played: {{ slotProps.data.matches }}<br>
+            <div class="pt-2">
+              Wins: {{ slotProps.data.wins }}<br>
+              <div class="pl-2">
+                Regulartime wins: {{ slotProps.data.regularTimeWins }} (points: {{ slotProps.data.pointsForRegularTimeWins }})<br>
+                Overtime wins: {{ slotProps.data.overtimewins }} (points: {{ slotProps.data.pointsForOverTimeWin }})<br>
+              </div>
+            </div>
+            <div class="pt-2">
+              Losses: {{ slotProps.data.losses }}<br>
+              <div class="pl-2">
+                Regulartime losses: {{ slotProps.data.regularTimeLosses }}<br>
+                <span v-if="slotProps.data.draws > 0">Draws: {{ slotProps.data.draws }} (points: {{ slotProps.data.pointsForDraws }})<br></span>
+                Overtime losses: {{ slotProps.data.overtimelosses }} (points: {{ slotProps.data.pointsForOverTimeLose }})<br>
+              </div>
+            </div>
+            <div class="pt-2">
+              Goals for: {{ slotProps.data.goalsFor }}<br>
+              Goals against: {{ slotProps.data.goalsAgainst }}<br>
+              Goals diff: {{ slotProps.data.goalsDiff }}<br>
+            </div>
+            <div class="pt-2">
+              Points: {{ slotProps.data.points }} ({{ slotProps.data.pointsForRegularTimeWins }} + {{ slotProps.data.pointsForOverTimeWin }} + {{ slotProps.data.pointsForOverTimeLose }})<br>
+              Maximum points: {{ slotProps.data.maximumPoints }}<br>
+              Points of percentage: {{ slotProps.data.playerPointsOfPercantage }} ({{ slotProps.data.points }}  / {{ slotProps.data.maximumPoints }})<br>
+            </div>
+          </div>
+        </template>
       </DataTable>
     </AccordionTab>
 
@@ -77,13 +121,14 @@
 <script setup lang="ts">
 import { useLoadingStore } from '@/stores/loading';
 import { useMatchStore } from '@/stores/match';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import _ from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import SelectButton from 'primevue/selectbutton';
+import Button from 'primevue/button';
 import moment from 'moment';
 import { useGamesStore, type Game } from '@/stores/game';
 import ToggleButton from 'primevue/togglebutton';
@@ -102,6 +147,8 @@ const playersInSameTeam = ref([] as Player[]);
 const games = computed(() => gameStore.games);
 const allPlayers = computed(() => playerStore.players);
 
+const expandedRows = ref({} as any);
+
 onMounted(async () => {
   if (matches.value === null) {
     loadingStore.doLoading(async () => {
@@ -111,6 +158,16 @@ onMounted(async () => {
     });
   }
 });
+
+const onRowExpand = (player: any) => {
+  if (expandedRows.value[player]) {
+    delete expandedRows.value[player];
+  } else {
+    expandedRows.value[player] = true;
+  }
+
+  expandedRows.value = {...expandedRows.value};
+}
 
 const filteredMatches = computed(() => {
   if (matchStore.matches === null) {
@@ -246,6 +303,11 @@ const standings = computed(() => {
         teamContainsPlayer(match.awayPlayers, playerOrTeam) && match.awayScore < match.homeScore && match.overtime;
       });
 
+      const matchesOvertimeWin = _.filter(matches, match => {
+        return teamContainsPlayer(match.homePlayers, playerOrTeam) && match.homeScore > match.awayScore && match.overtime ||
+        teamContainsPlayer(match.awayPlayers, playerOrTeam) && match.awayScore > match.homeScore && match.overtime;
+      });
+
       const matchesDraw = _.filter(matches, match => {
         return match.homeScore === match.awayScore && (teamContainsPlayer(match.homePlayers, playerOrTeam) || teamContainsPlayer(match.awayPlayers, playerOrTeam));
       });
@@ -269,24 +331,37 @@ const standings = computed(() => {
 
       const loseOrWinStreakLatestStreakSameType = teamOrPlayerLoseAndWinStreak.match(/(W+|L+)/g)?.[0] || '';
 
+      const goalsFor = _.sumBy(matches, match => {
+        return teamContainsPlayer(match.homePlayers, playerOrTeam) ? match.homeScore : match.awayScore;
+      });
+
+      const goalsAgainst = _.sumBy(matches, match => {
+        return teamContainsPlayer(match.homePlayers, playerOrTeam) ? match.awayScore : match.homeScore;
+      });
+
       return {
         player: playerOrTeam.map(p => p.username).join(','),
         wins: matchesWon.length,
+        regularTimeWins: _.filter(matchesWon, match => !match.overtime).length,
+        pointsForRegularTimeWins: _.sumBy(_.filter(matchesWon, match => !match.overtime), match => match.game?.pointsForWin!),
         losses: matchesLost.length,
+        regularTimeLosses: _.filter(matchesLost, match => !match.overtime).length,
         draws: matchesDraw.length,
+        pointsForDraws: _.sumBy(matchesDraw, match => match.game?.pointsForDraw!),
         matches: matches.length,
         overtimelosses: matchesOvertimeLost.length,
+        pointsForOverTimeLose: _.sumBy(matchesOvertimeLost, match => match.game?.pointsForOTLose!),
+        overtimewins: matchesOvertimeWin.length,
+        pointsForOverTimeWin: _.sumBy(matchesOvertimeWin, match => match.game?.pointsForOTWin!),
         points: points,
-        goalsFor: _.sumBy(matches, match => {
-          return teamContainsPlayer(match.homePlayers, playerOrTeam) ? match.homeScore : match.awayScore;
-        }),
-
-        goalsAgainst: _.sumBy(matches, match => {
-          return teamContainsPlayer(match.homePlayers, playerOrTeam) ? match.awayScore : match.homeScore;
-        }),
+        goalsFor,
+        goalsAgainst,
+        goalsDiff: goalsFor - goalsAgainst,
         playerPointsOfPercantage: points / _.sumBy(matches, match => match.game?.pointsForWin!),
+        maximumPoints: _.sumBy(matches, match => match.game?.pointsForWin!),
         validResult: matches.length > averagePlayedGamesByPlayerOrTeam,
-        loseOrWinStreakLatestStreakSameType: loseOrWinStreakLatestStreakSameType.length + loseOrWinStreakLatestStreakSameType[0].charAt(0)
+        loseOrWinStreakLatestStreak: loseOrWinStreakLatestStreakSameType.length,
+        loseOrWinStreakLatestStreakType: loseOrWinStreakLatestStreakSameType[0].charAt(0)
 
       };
     })
