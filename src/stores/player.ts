@@ -5,6 +5,7 @@ import _ from 'lodash';
 export interface Player {
   id: string;
   username: string;
+  ownedGames: string[];
 };
 
 export const usePlayersStore = defineStore('player', () => {

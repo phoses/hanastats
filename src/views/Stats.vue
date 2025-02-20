@@ -25,7 +25,7 @@
         <!-- <Column expander style="width: 5rem" /> -->
         <Column field="player" header="player">
           <template #body="slotProps">
-            <Button class="p-0 py-1 text-left" link :label="slotProps.data.player" @click.stop="onRowExpand(slotProps.data.player)" />
+            <Button class="p-0 pb-1 text-left" link :label="slotProps.data.player" @click.stop="onRowExpand(slotProps.data.player)" />
           </template>
         </Column>
         <Column field="matches" header="gp"></Column>
@@ -43,6 +43,7 @@
               <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'W'">🔥</span>
               <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'L'">❄️</span>
             </template>
+            <span v-if="slotProps.data.ownsGame">🎮</span>
           </template>
         </Column>
         <Column field="playerPointsOfPercantage" header="p%"></Column>
@@ -169,6 +170,10 @@ const onRowExpand = (player: any) => {
   expandedRows.value = {...expandedRows.value};
 }
 
+const filteredGames = computed(() => {
+  return _.uniqBy([...gameFilter.value, ...enabledGamesFilter.value], 'id');
+});
+
 const filteredMatches = computed(() => {
   if (matchStore.matches === null) {
     return null;
@@ -176,8 +181,7 @@ const filteredMatches = computed(() => {
 
   return _.chain(matchStore.matches)
     .filter(match => playerCountFilter.value.length === 0 || _.map(playerCountFilter.value, 'value').includes([...match.homePlayers, ...match.awayPlayers].length))
-    .filter(match => gameFilter.value.length === 0 || gameFilter.value.map(g => g.id).includes(match.game!.id))
-    .filter(match => enabledGamesFilter.value.length === 0 || enabledGamesFilter.value.map(g => g.id).includes(match.game!.id))
+    .filter(match => filteredGames.value.length === 0 || filteredGames.value.map(g => g.id).includes(match.game!.id))
     .filter(match => playersInSameTeam.value.length === 0 || playersInSameTeam.value.every(player => match.homePlayers.map(p => p.id).includes(player.id)) || playersInSameTeam.value.every(player => match.awayPlayers.map(p => p.id).includes(player.id)))
     .map(match => {
       return {
@@ -339,8 +343,15 @@ const standings = computed(() => {
         return teamContainsPlayer(match.homePlayers, playerOrTeam) ? match.awayScore : match.homeScore;
       });
 
+
+      const currentPlayer = allPlayers.value?.find(p => p.username === playerOrTeam[0].username);
+      const ownsGame = _.size(playerOrTeam) === 1
+        && filteredGames.value.length === 1
+        && _.find(currentPlayer?.ownedGames || [], gameId => gameId === filteredGames.value[0].id);
+
       return {
         player: playerOrTeam.map(p => p.username).join(','),
+        ownsGame,
         wins: matchesWon.length,
         regularTimeWins: _.filter(matchesWon, match => !match.overtime).length,
         pointsForRegularTimeWins: _.sumBy(_.filter(matchesWon, match => !match.overtime), match => match.game?.pointsForWin!),
