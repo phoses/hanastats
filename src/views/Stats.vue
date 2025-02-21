@@ -119,7 +119,7 @@
 <script setup lang="ts">
 import { useLoadingStore } from '@/stores/loading';
 import { useMatchStore } from '@/stores/match';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import _ from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
@@ -169,6 +169,10 @@ const onRowExpand = (player: any) => {
 
 const filteredGames = computed(() => {
   return _.uniqBy([...gameFilter.value, ...enabledGamesFilter.value], 'id');
+});
+
+watch(filteredGames, (newVal: Game[]) => {
+  expandedRows.value = {...expandedRows.value};
 });
 
 const filteredMatches = computed(() => {
