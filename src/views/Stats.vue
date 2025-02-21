@@ -7,6 +7,7 @@
       <SelectButton v-model="playerCountFilter" :options="listOfPlayerCountOfMatches" optionLabel="name" multiple class="mt-3"/>
       <ToggleButton v-model="standingsAsWholeTeam" onLabel="Whole teams" offLabel="Whole teams" class="mt-3"/>
       <SelectButton v-model="playersInSameTeam" :options="allPlayers" optionLabel="username" multiple class="mt-3"/>
+      <SelectButton v-model="playedMatchMonthFilter" :options="distinctPlayedMatchesMonths" multiple class="mt-3"/>
     </AccordionTab>
 
     <AccordionTab>
@@ -119,14 +120,13 @@
 <script setup lang="ts">
 import { useLoadingStore } from '@/stores/loading';
 import { useMatchStore } from '@/stores/match';
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import _ from 'lodash';
 import Accordion from 'primevue/accordion';
 import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import SelectButton from 'primevue/selectbutton';
-import Button from 'primevue/button';
 import moment from 'moment';
 import { useGamesStore, type Game } from '@/stores/game';
 import ToggleButton from 'primevue/togglebutton';
@@ -142,6 +142,7 @@ const gameFilter = ref([] as Game[]);
 const enabledGamesFilter = ref([] as Game[]);
 const standingsAsWholeTeam = ref(false)
 const playersInSameTeam = ref([] as Player[]);
+const playedMatchMonthFilter = ref([] as string[]);
 const games = computed(() => gameStore.games);
 const allPlayers = computed(() => playerStore.players);
 
@@ -171,7 +172,7 @@ const filteredGames = computed(() => {
   return _.uniqBy([...gameFilter.value, ...enabledGamesFilter.value], 'id');
 });
 
-watch(filteredGames, (newVal: Game[]) => {
+watch(filteredGames, () => {
   expandedRows.value = {...expandedRows.value};
 });
 
@@ -184,6 +185,7 @@ const filteredMatches = computed(() => {
     .filter(match => playerCountFilter.value.length === 0 || _.map(playerCountFilter.value, 'value').includes([...match.homePlayers, ...match.awayPlayers].length))
     .filter(match => filteredGames.value.length === 0 || filteredGames.value.map(g => g.id).includes(match.game!.id))
     .filter(match => playersInSameTeam.value.length === 0 || playersInSameTeam.value.every(player => match.homePlayers.map(p => p.id).includes(player.id)) || playersInSameTeam.value.every(player => match.awayPlayers.map(p => p.id).includes(player.id)))
+    .filter(match => playedMatchMonthFilter.value.length === 0 || playedMatchMonthFilter.value.includes(moment(match.played).format('YYYY-MM')))
     .map(match => {
       return {
         ...match,
@@ -210,6 +212,18 @@ const distinctGames = computed(() => {
 const enabledGames = computed(() => {
   return _.filter(games.value, game => !game.disabled);
 })
+
+const distinctPlayedMatchesMonths = computed(() => {
+  if (matchStore.matches === null) {
+    return null;
+  }
+
+  return _.chain(matchStore.matches)
+    .map(match => moment(match.played).format('YYYY-MM'))
+    .uniq()
+    .reverse()
+    .value();
+});
 
 const matches = computed(() => {
   if (matchStore.matches === null) {
