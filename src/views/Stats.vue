@@ -22,10 +22,16 @@
         :value="standings"
         :rowClass="({validResult}) => !validResult ? 'row-disabled' : undefined"
         dataKey="player">
-        <!-- <Column expander style="width: 5rem" /> -->
         <Column field="player" header="player">
           <template #body="slotProps">
-            <Button class="p-0 pb-1 text-left" link :label="slotProps.data.player" @click.stop="onRowExpand(slotProps.data.player)" />
+            <div class="flex align-items-center">
+              <a href="javascript:void(0)" @click.stop="onRowExpand(slotProps.data.player)">{{ slotProps.data.player }}</a>
+              <template v-if="slotProps.data.loseOrWinStreakLatestStreak > 4">
+                <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'W'">🔥</span>
+                <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'L'">❄️</span>
+              </template>
+              <span v-if="slotProps.data.ownsGame" class="color-invert">🎮</span>
+            </div>
           </template>
         </Column>
         <Column field="matches" header="gp"></Column>
@@ -35,15 +41,6 @@
         <Column field="loseOrWinStreakLatestStreak" header="s">
           <template #body="slotProps">
             {{ slotProps.data.loseOrWinStreakLatestStreak + slotProps.data.loseOrWinStreakLatestStreakType }}
-          </template>
-        </Column>
-        <Column field="loseOrWinStreakLatestStreakType" header="f">
-          <template #body="slotProps">
-            <template v-if="slotProps.data.loseOrWinStreakLatestStreak > 4">
-              <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'W'">🔥</span>
-              <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'L'">❄️</span>
-            </template>
-            <span v-if="slotProps.data.ownsGame">🎮</span>
           </template>
         </Column>
         <Column field="playerPointsOfPercantage" header="p%"></Column>
@@ -479,6 +476,10 @@ const standings = computed(() => {
 
 .quickfilter :deep(.p-button) {
   padding: 0;
+}
+
+.color-invert {
+  filter: invert(1);
 }
 
 </style>
