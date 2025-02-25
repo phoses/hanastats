@@ -38,7 +38,8 @@
         <Column field="matches" header="gp"></Column>
         <Column field="wins" header="w"></Column>
         <Column field="losses" header="l"></Column>
-        <Column field="goalsDiff" header="diff"></Column>
+        <Column field="overtimelosses" header="ot"></Column>
+        <Column field="goalsDiff" header="g-diff"></Column>
         <Column field="loseOrWinStreakLatestStreak" header="s">
           <template #body="slotProps">
             {{ slotProps.data.loseOrWinStreakLatestStreak + slotProps.data.loseOrWinStreakLatestStreakType }}
@@ -379,7 +380,7 @@ const standings = computed(() => {
         pointsForOverTimeLose: _.sumBy(matchesOvertimeLost, match => match.game?.pointsForOTLose!),
         overtimewins: matchesOvertimeWin.length,
         pointsForOverTimeWin: _.sumBy(matchesOvertimeWin, match => match.game?.pointsForOTWin!),
-        points: points,
+        points,
         goalsFor,
         goalsAgainst,
         goalsDiff: goalsFor - goalsAgainst,
