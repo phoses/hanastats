@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import { getDatabase, ref as fbRef, get, child, push } from "firebase/database";
 import _ from 'lodash';
-import type { Game } from './game';
+import type { Game, Team } from './game';
 import type { Player } from './player';
 
 export interface Match {
@@ -15,6 +15,8 @@ export interface Match {
   homeScore: number;
   awayScore: number;
   overtime: boolean;
+  homeTeam?: Team;
+  awayTeam?: Team;
 }
 
 export const useMatchStore = defineStore('match', () => {

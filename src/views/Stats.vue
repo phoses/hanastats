@@ -92,9 +92,15 @@
           <div v-if="match.game">{{match.game.name}}</div>
         </div>
         <div class="flex flex-column align-content-start flex-grow-1">
-          <div class="hometeam" :class="{'winner': match.homewinner}">{{ match.homePlayers.map(p => p.username).join(',') }}</div>
+          <div class="hometeam" :class="{'winner': match.homewinner}">
+            {{ match.homePlayers.map(p => p.username).join(',') }}
+            <span v-if="match.homeTeam">({{ match.homeTeam.shortName }})</span>
+          </div>
           <div>VS</div>
-          <div class="pr-2 awayteam" :class="{'winner': match.awaywinner}">{{ match.awayPlayers.map(p => p.username).join(',') }}</div>
+          <div class="pr-2 awayteam" :class="{'winner': match.awaywinner}">
+            {{ match.awayPlayers.map(p => p.username).join(',') }}
+            <span v-if="match.awayTeam">({{ match.awayTeam.shortName }})</span>
+          </div>
         </div>
         <div class="flex flex-none align-content-start">
           <div>{{ match.homeScore }}:{{ match.awayScore }}</div>

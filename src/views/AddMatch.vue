@@ -21,11 +21,13 @@
       <div class="flex">
         <TeamScore v-model="match.homeScore" class="w-6">
           <template #teamName>home</template>
-          <template #team>{{ match.homePlayers.map(p => p.username).join(', ') }}</template>
+          <template #team v-if="match.homeTeam">{{match.homeTeam.name}}</template>
+          <template #players>{{ match.homePlayers.map(p => p.username).join(', ') }}</template>
         </TeamScore>
         <TeamScore v-model="match.awayScore" class="w-6">
           <template #teamName>away</template>
-          <template #team>{{ match.awayPlayers.map(p => p.username).join(', ') }}</template>
+          <template #team v-if="match.awayTeam">{{match.awayTeam.name}}</template>
+          <template #players>{{ match.awayPlayers.map(p => p.username).join(', ') }}</template>
         </TeamScore>
       </div>
 
@@ -42,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { useGamesStore, type Game } from '@/stores/game';
+import { useGamesStore, type Game, type Team } from '@/stores/game';
 import { useMatchStore, type Match } from '@/stores/match';
 import { useLoadingStore } from '@/stores/loading';
 import { usePlayersStore, type Player } from '@/stores/player';
@@ -51,7 +53,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import SelectButton from 'primevue/selectbutton';
 import Checkbox from 'primevue/checkbox';
-import TeamScore from '../components/TeamScore.vue';
+import TeamScore from '@/components/TeamScore.vue';
 import _ from 'lodash';
 
 const matchStore = useMatchStore();
@@ -72,6 +74,8 @@ const match = ref({
     homeScore: 0,
     awayScore: 0,
     overtime: false,
+    homeTeam: null as Team | null,
+    awayTeam: null as Team | null,
   } as Match);
 
 const selectedPlayers = ref([]);
@@ -125,6 +129,18 @@ watch(selectedPlayers, (newVal: Player[]) => {
         }
       }
     });
+  }
+
+  if (match.value?.game?.teams?.length! > 1) {
+    const teams = _.shuffle(match.value?.game?.teams);
+    match.value.homeTeam = teams[0];
+    match.value.awayTeam = teams[1];
+  } else {
+    match.value = {
+      ...match.value,
+      homeTeam: undefined,
+      awayTeam: undefined,
+    };
   }
 });
 

@@ -3,8 +3,11 @@
     <div class="mb-2 underline">
       <slot name="teamName"/>
     </div>
-    <div class="mb-3">
+    <div class="mb-4 team">
       <slot name="team"/>
+    </div>
+    <div class="mb-4 players">
+      <slot name="players"/>
     </div>
     <div class="w-full flex flex-column">
       <div class="text-4xl mb-3">{{ model }}</div>
@@ -34,4 +37,9 @@ import Button from 'primevue/button';
 </script>
 
 <style scoped>
+
+.team {
+  font-size: 1.2rem;
+}
+
 </style>

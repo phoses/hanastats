@@ -10,7 +10,14 @@ export interface Game {
   pointsForOTLose: number;
   pointsForOTWin: number;
   disabled: boolean;
+  teams?: Team[];
 };
+
+export interface Team {
+  id?: string;
+  name: string;
+  shortName: string;
+}
 
 export const useGamesStore = defineStore('game', () => {
   const games = ref(null as Game[] | null);
@@ -47,5 +54,31 @@ export const useGamesStore = defineStore('game', () => {
     await update(fbRef(getDatabase(), 'games/'), dataBaseRefGame);
   }
 
-  return { games, getGames, addGame, updateGame };
+  async function addTeam(game: Game, team: Team) {
+    team.id = crypto.randomUUID();
+    const dataBaseRefGame = {
+      [game.id]: {
+        ..._.omit(game, 'id'),
+        teams: [
+          ...(game.teams ? game.teams : []),
+          team,
+        ]
+      }
+    }
+
+    await update(fbRef(getDatabase(), 'games/'), dataBaseRefGame);
+  }
+
+  async function deleteTeam(game: Game, team: Team) {
+    const dataBaseRefGame = {
+      [game.id]: {
+        ..._.omit(game, 'id'),
+        teams: _.filter(game.teams, (t) => t.id !== team.id),
+      }
+    }
+
+    await update(fbRef(getDatabase(), 'games/'), dataBaseRefGame);
+  }
+
+  return { games, getGames, addGame, updateGame, addTeam, deleteTeam };
 })

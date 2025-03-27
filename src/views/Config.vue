@@ -8,16 +8,51 @@
     </li>
   </ul>
 
-  <div v-if="userStore.currentUser?.role === 'admin'" class="flex">
-    <InputText type="text" v-model="playername" />
-    <Button @click="addPlayer" icon="pi pi-plus" size="large"/>
+  <div v-if="userStore.currentUser?.role === 'admin'">
+    <InputText type="text" v-model="playername" placeholder="player name" />
+    <Button @click="addPlayer" label="add player" class="mt-2 block"/>
   </div>
 
   <h2>games</h2>
-  <div v-for="game in games" :key="game.id" class="flex mb-3">
-    <div class="name">{{ game.name }}</div>
-    <Button v-if="!game.disabled" label="disable" @click="changeStatus(game, { disabled: true })" class="p-button-danger p-button-text p-0"/>
-    <Button v-if="game.disabled" label="enable" @click="changeStatus(game, { disabled: false })" class="p-button-text p-0"/>
+  <div v-for="game in games" :key="game.id" class="mb-3">
+
+    <a class="name" href="javascript:;" @click="open(game.id)">{{ game.name }}</a>
+
+    <div v-if="gameOpen === game.id">
+      <span class="mr-4">game status: {{ game.disabled ? 'disabled' : 'enabled' }}</span>
+      <Button v-if="!game.disabled" label="disable" @click="changeStatus(game, { disabled: true })" class="p-button-danger p-button-text p-0"/>
+      <Button v-if="game.disabled" label="enable" @click="changeStatus(game, { disabled: false })" class="p-button-text p-0"/>
+      <span>game</span>
+
+      <div class="mt-3">
+        <div>points for win: {{ game.pointsForWin }}</div>
+        <div>points for draw: {{ game.pointsForDraw }}</div>
+        <div>points for OT winner: {{ game.pointsForOTWin }}</div>
+        <div>points for OT lose: {{ game.pointsForOTLose }}</div>
+      </div>
+
+      <div class="mt-3">
+        <template v-if="game.teams && game.teams.length > 0">
+          <div>teams</div>
+          <ul v-if="game.teams && game.teams.length > 0">
+            <li v-for="(team, index) in game.teams" :key="game.id + index">
+              {{ team.name }} ({{ team.shortName }})
+              <Button label="delete" @click="deleteTeam(game, team)" class="p-button-danger p-button-text p-0"/>
+            </li>
+          </ul>
+        </template>
+        <div v-else>
+          no teams added
+        </div>
+
+        <div class="mt-2">
+          <InputText type="text" v-model="teamName" placeholder="team name" />
+          <InputText type="text" v-model="teamNameShort" placeholder="short name" />
+          <Button @click="addTeam(game)" label="add team" class="block mt-2"/>
+        </div>
+      </div>
+      <hr/>
+    </div>
   </div>
 
   <template v-if="userStore.currentUser?.role === 'admin'">
@@ -43,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { useGamesStore, type Game } from '@/stores/game';
+import { useGamesStore, type Game, type Team } from '@/stores/game';
 import { useLoadingStore } from '@/stores/loading';
 import { usePlayersStore } from '@/stores/player';
 import { useUserStore } from '@/stores/user';
@@ -51,16 +86,20 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { ref, onMounted, computed } from 'vue';
 import InputNumber from 'primevue/inputnumber';
+import _ from 'lodash';
 
 const gameStore = useGamesStore();
 const playerStore = usePlayersStore();
 const userStore = useUserStore();
 const loadingStore = useLoadingStore();
 
-const games = computed(() => gameStore.games);
+const games = computed(() => _.sortBy(gameStore.games, game => game.disabled ? 1 : 0));
 const players = computed(() => playerStore.players);
 const playername = ref('');
+const teamName = ref('');
+const teamNameShort = ref('');
 const game = ref({} as Game);
+const gameOpen = ref('');
 
 onMounted(async () => {
   if (players.value === null) {
@@ -94,6 +133,25 @@ async function changeStatus(game: Game, newStatus: { disabled: boolean }) {
   });
 }
 
+function open(gameId: string) {
+  gameOpen.value = gameId;
+}
+
+async function addTeam(game: Game) {
+  loadingStore.doLoading(async () => {
+    await gameStore.addTeam(game, { name: teamName.value, shortName: teamNameShort.value });
+    await gameStore.getGames();
+    teamName.value = '';
+    teamNameShort.value = '';
+  });
+}
+
+async function deleteTeam(game: Game, team: Team) {
+  loadingStore.doLoading(async () => {
+    await gameStore.deleteTeam(game, team);
+    await gameStore.getGames();
+  });
+}
 
 </script>
 
