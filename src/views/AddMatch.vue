@@ -135,13 +135,7 @@ watch(selectedPlayers, (newVal: Player[]) => {
     const teams = _.shuffle(match.value?.game?.teams);
     match.value.homeTeam = teams[0];
     match.value.awayTeam = teams[1];
-  } else {
-    match.value = {
-      ...match.value,
-      homeTeam: undefined,
-      awayTeam: undefined,
-    };
-  }
+  } 
 });
 
 async function addMatch() {
