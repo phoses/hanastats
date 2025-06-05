@@ -38,6 +38,7 @@
         <Column field="matches" header="gp"></Column>
         <Column field="wins" header="w"></Column>
         <Column field="losses" header="l"></Column>
+        <Column v-if="showDraws" field="draws" header="d"></Column>
         <Column field="overtimelosses" header="ot"></Column>
         <Column field="goalsDiff" header="g-diff"></Column>
         <Column field="loseOrWinStreakLatestStreak" header="s">
@@ -60,9 +61,11 @@
               Losses: {{ slotProps.data.losses }}<br>
               <div class="pl-2">
                 Regulartime losses: {{ slotProps.data.regularTimeLosses }}<br>
-                <span v-if="slotProps.data.draws > 0">Draws: {{ slotProps.data.draws }} (points: {{ slotProps.data.pointsForDraws }})<br></span>
                 Overtime losses: {{ slotProps.data.overtimelosses }} (points: {{ slotProps.data.pointsForOverTimeLose }})<br>
               </div>
+            </div>
+            <div class="pt-2" v-if="showDraws && slotProps.data.draws > 0">
+              Draws: {{ slotProps.data.draws }} (points: {{ slotProps.data.pointsForDraws }})
             </div>
             <div class="pt-2">
               Goals for: {{ slotProps.data.goalsFor }}<br>
@@ -70,7 +73,8 @@
               Goals diff: {{ slotProps.data.goalsDiff }}<br>
             </div>
             <div class="pt-2">
-              Points: {{ slotProps.data.points }} ({{ slotProps.data.pointsForRegularTimeWins }} + {{ slotProps.data.pointsForOverTimeWin }} + {{ slotProps.data.pointsForOverTimeLose }})<br>
+              Points: {{ slotProps.data.points }} (
+                {{ slotProps.data.pointsForRegularTimeWins }} + {{ slotProps.data.pointsForOverTimeWin }} + {{ slotProps.data.pointsForOverTimeLose }} + {{ slotProps.data.pointsForDraws }})<br>
               Maximum points: {{ slotProps.data.maximumPoints }}<br>
               Points of percentage: {{ slotProps.data.playerPointsOfPercantage }} ({{ slotProps.data.points }}  / {{ slotProps.data.maximumPoints }})<br>
             </div>
@@ -152,6 +156,15 @@ const playersInSameTeam = ref([] as Player[]);
 const playedMatchMonthFilter = ref([] as string[]);
 const games = computed(() => gameStore.games);
 const allPlayers = computed(() => playerStore.players);
+
+const showDraws = computed(() => {
+  // Show draws column when a single game is selected and it has points for draw
+  if (filteredGames.value.length === 1) {
+    const selectedGame = filteredGames.value[0];
+    return selectedGame && selectedGame.pointsForDraw && selectedGame.pointsForDraw > 0;
+  }
+  return false;
+});
 
 const expandedRows = ref({} as any);
 
