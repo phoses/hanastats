@@ -355,7 +355,7 @@ const standings = computed(() => {
         _.sumBy(matchesLost, match => match.overtime ? match.game?.pointsForOTLose! : 0) +
         _.sumBy(matchesDraw, match => match.game?.pointsForDraw!);
 
-      const averagePlayedGamesByPlayerOrTeam = _.size(filteredMatches.value) / (standingsAsWholeTeam.value ? uniqueTeams.value.length : players.value.length);
+      const averagePlayedGamesByPlayerOrTeam = Math.floor(filteredMatches.value.length / 10);
 
       const teamOrPlayerLoseAndWinStreak = _.chain(matches)
         .sortBy('played')
