@@ -47,6 +47,7 @@
           </template>
         </Column>
         <Column field="playerPointsOfPercantage" header="p%"></Column>
+        <Column v-if="!standingsAsWholeTeam" field="elo" header="elo"></Column>
         <template #expansion="slotProps">
           <div class="py-2">
             Games played: {{ slotProps.data.matches }}<br>
@@ -78,6 +79,9 @@
               Maximum points: {{ slotProps.data.maximumPoints }}<br>
               Points of percentage: {{ slotProps.data.playerPointsOfPercantage }} ({{ slotProps.data.points }}  / {{ slotProps.data.maximumPoints }})<br>
             </div>
+            <div class="pt-2" v-if="!standingsAsWholeTeam">
+              ELO Rating: {{ slotProps.data.elo }}<br>
+            </div>
           </div>
         </template>
       </DataTable>
@@ -89,26 +93,34 @@
         <span v-if="matches">({{ matches.length }})</span>
       </template>
 
-      <div v-for="match in matches" :key="match.id" class="flex match justify-content-between mb-2">
-        <div class="flex flex-column mr-3">
-          <div>{{match.playedFormatted}}</div>
+      <div v-for="match in matches" :key="match.id" class="mb-2">
+        <div v-if="match.id" class="flex match justify-content-between clickable" @click="onMatchExpand(match.id)">
+          <div class="flex flex-column mr-3">
+            <div>{{match.playedFormatted}}</div>
 
-          <div v-if="match.game">{{match.game.name}}</div>
-        </div>
-        <div class="flex flex-column align-content-start flex-grow-1">
-          <div class="hometeam" :class="{'winner': match.homewinner}">
-            {{ match.homePlayers.map(p => p.username).join(',') }}
-            <span v-if="match.homeTeam">({{ match.homeTeam.shortName }})</span>
+            <div v-if="match.game">{{match.game.name}}</div>
           </div>
-          <div>VS</div>
-          <div class="pr-2 awayteam" :class="{'winner': match.awaywinner}">
-            {{ match.awayPlayers.map(p => p.username).join(',') }}
-            <span v-if="match.awayTeam">({{ match.awayTeam.shortName }})</span>
+          <div class="flex flex-column align-content-start flex-grow-1">
+            <div class="hometeam" :class="{'winner': match.homewinner}">
+              {{ match.homePlayers.map(p => p.username).join(',') }}
+              <span v-if="match.homeTeam">({{ match.homeTeam.shortName }})</span>
+            </div>
+            <div>VS</div>
+            <div class="pr-2 awayteam" :class="{'winner': match.awaywinner}">
+              {{ match.awayPlayers.map(p => p.username).join(',') }}
+              <span v-if="match.awayTeam">({{ match.awayTeam.shortName }})</span>
+            </div>
+          </div>
+          <div class="flex flex-none align-content-start">
+            <div>{{ match.homeScore }}:{{ match.awayScore }}</div>
+            <div class="w-2rem"><span v-if="match.overtime">(OT)</span></div>
           </div>
         </div>
-        <div class="flex flex-none align-content-start">
-          <div>{{ match.homeScore }}:{{ match.awayScore }}</div>
-          <div class="w-2rem"><span v-if="match.overtime">(OT)</span></div>
+        <div v-if="match.id && expandedMatches[match.id] && match.eloChanges.length > 0" class="elo-details pl-3 pt-2 pb-2">
+          <div class="font-bold mb-1">ELO Changes:</div>
+          <div v-for="change in match.eloChanges" :key="change.playerId" class="elo-change">
+            {{ change.playerName }}: {{ change.oldElo }} <span :class="change.change >= 0 ? 'text-green-500' : 'text-red-500'">{{ change.change >= 0 ? '+' : '' }}{{ change.change }}</span> = {{ change.newElo }}
+          </div>
         </div>
       </div>
     </AccordionTab>
@@ -167,6 +179,7 @@ const showDraws = computed(() => {
 });
 
 const expandedRows = ref({} as any);
+const expandedMatches = ref({} as any);
 
 onMounted(async () => {
   if (matches.value === null) {
@@ -186,6 +199,16 @@ const onRowExpand = (player: any) => {
   }
 
   expandedRows.value = {...expandedRows.value};
+}
+
+const onMatchExpand = (matchId: string) => {
+  if (expandedMatches.value[matchId]) {
+    delete expandedMatches.value[matchId];
+  } else {
+    expandedMatches.value[matchId] = true;
+  }
+
+  expandedMatches.value = {...expandedMatches.value};
 }
 
 const filteredGames = computed(() => {
@@ -250,13 +273,16 @@ const matches = computed(() => {
     return null;
   }
 
+  const { matchEloChanges } = calculateEloRatings();
+
   return _.chain(filteredMatches.value)
     .map(match => {
       return {
         ...match,
         playedFormatted: moment(match.played).format('YY-MM-DD'),
         homewinner: match.homeScore > match.awayScore,
-        awaywinner: match.awayScore > match.homeScore
+        awaywinner: match.awayScore > match.homeScore,
+        eloChanges: match.id ? (matchEloChanges[match.id] || []) : []
       };
     })
     .sortBy('played')
@@ -315,10 +341,108 @@ const uniqueTeams = computed(() => {
   ], players => players.map(p => p.id).join(','));
 });
 
+const calculateEloRatings = () => {
+  const K_FACTOR = 32; // Standard K-factor for ELO
+  const BASE_ELO = 1500;
+  
+  // Initialize ELO ratings for all individual players
+  const eloRatings: { [key: string]: number } = {};
+  
+  // Store ELO changes per match
+  const matchEloChanges: { [matchId: string]: any[] } = {};
+  
+  // Initialize all players with base ELO
+  players.value.forEach(playerArray => {
+    const playerId = playerArray[0].id;
+    eloRatings[playerId] = BASE_ELO;
+  });
+  
+  // Calculate expected score
+  const getExpectedScore = (ratingA: number, ratingB: number): number => {
+    return 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+  };
+  
+  // Process matches chronologically
+  const sortedMatches = _.sortBy(filteredMatches.value, 'played');
+  
+  sortedMatches.forEach(match => {
+    // Calculate average ELO for each team
+    const homePlayersElo = match.homePlayers.map(p => eloRatings[p.id] || BASE_ELO);
+    const awayPlayersElo = match.awayPlayers.map(p => eloRatings[p.id] || BASE_ELO);
+    
+    const homeTeamAvgElo = _.mean(homePlayersElo);
+    const awayTeamAvgElo = _.mean(awayPlayersElo);
+    
+    // Determine actual scores (1 for win, 0.5 for draw, 0 for loss)
+    let homeActual: number;
+    let awayActual: number;
+    
+    if (match.homeScore > match.awayScore) {
+      homeActual = 1;
+      awayActual = 0;
+    } else if (match.homeScore < match.awayScore) {
+      homeActual = 0;
+      awayActual = 1;
+    } else {
+      homeActual = 0.5;
+      awayActual = 0.5;
+    }
+    
+    // Track ELO changes for this match
+    const matchChanges: any[] = [];
+    
+    // Update ELO for each home player against average away team ELO
+    match.homePlayers.forEach(player => {
+      const oldElo = eloRatings[player.id] || BASE_ELO;
+      const expectedScore = getExpectedScore(oldElo, awayTeamAvgElo);
+      const newElo = oldElo + K_FACTOR * (homeActual - expectedScore);
+      const change = newElo - oldElo;
+      
+      matchChanges.push({
+        playerId: player.id,
+        playerName: player.username,
+        oldElo: Math.round(oldElo),
+        change: Math.round(change),
+        newElo: Math.round(newElo),
+        team: 'home'
+      });
+      
+      eloRatings[player.id] = newElo;
+    });
+    
+    // Update ELO for each away player against average home team ELO
+    match.awayPlayers.forEach(player => {
+      const oldElo = eloRatings[player.id] || BASE_ELO;
+      const expectedScore = getExpectedScore(oldElo, homeTeamAvgElo);
+      const newElo = oldElo + K_FACTOR * (awayActual - expectedScore);
+      const change = newElo - oldElo;
+      
+      matchChanges.push({
+        playerId: player.id,
+        playerName: player.username,
+        oldElo: Math.round(oldElo),
+        change: Math.round(change),
+        newElo: Math.round(newElo),
+        team: 'away'
+      });
+      
+      eloRatings[player.id] = newElo;
+    });
+    
+    if (match.id) {
+      matchEloChanges[match.id] = matchChanges;
+    }
+  });
+  
+  return { eloRatings, matchEloChanges };
+};
+
 const standings = computed(() => {
   if (matchStore.matches === null) {
     return null;
   }
+
+  const { eloRatings } = calculateEloRatings();
 
   return _.chain(standingsAsWholeTeam.value ? uniqueTeams.value : players.value)
     .map(playerOrTeam => {
@@ -355,7 +479,7 @@ const standings = computed(() => {
         _.sumBy(matchesLost, match => match.overtime ? match.game?.pointsForOTLose! : 0) +
         _.sumBy(matchesDraw, match => match.game?.pointsForDraw!);
 
-      const averagePlayedGamesByPlayerOrTeam = Math.floor(filteredMatches.value.length * 0.122);
+      const averagePlayedGamesByPlayerOrTeam = Math.floor((filteredMatches.value?.length || 0) * 0.122);
 
       const teamOrPlayerLoseAndWinStreak = _.chain(matches)
         .sortBy('played')
@@ -384,6 +508,11 @@ const standings = computed(() => {
         && filteredGames.value.length === 1
         && _.find(currentPlayer?.ownedGames || [], gameId => gameId === filteredGames.value[0].id);
 
+      // ELO is only calculated for individual players, not teams
+      const elo = !standingsAsWholeTeam.value && playerOrTeam.length === 1 
+        ? Math.round(eloRatings[playerOrTeam[0].id] || 1500) 
+        : 0;
+
       return {
         player: playerOrTeam.map(p => p.username).join(','),
         ownsGame,
@@ -407,11 +536,12 @@ const standings = computed(() => {
         maximumPoints: _.sumBy(matches, match => match.game?.pointsForWin!),
         validResult: matches.length > averagePlayedGamesByPlayerOrTeam,
         loseOrWinStreakLatestStreak: loseOrWinStreakLatestStreakSameType.length,
-        loseOrWinStreakLatestStreakType: loseOrWinStreakLatestStreakSameType[0].charAt(0)
+        loseOrWinStreakLatestStreakType: loseOrWinStreakLatestStreakSameType[0].charAt(0),
+        elo
 
       };
     })
-    .sortBy(['validResult', 'playerPointsOfPercantage', 'points'])
+    .sortBy(['validResult', 'elo','playerPointsOfPercantage', 'points'])
     .reverse()
     .map(standing => {
       return {
@@ -518,6 +648,32 @@ const standings = computed(() => {
 
 .color-invert {
   filter: invert(1);
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.elo-details {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-left: 2px solid #555;
+  font-size: 0.9em;
+}
+
+.elo-change {
+  margin-bottom: 0.25rem;
+}
+
+.text-green-500 {
+  color: #22c55e;
+}
+
+.text-red-500 {
+  color: #ef4444;
 }
 
 </style>
