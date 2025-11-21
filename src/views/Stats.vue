@@ -395,15 +395,15 @@ const calculateEloRatings = () => {
     match.homePlayers.forEach(player => {
       const oldElo = eloRatings[player.id] || BASE_ELO;
       const expectedScore = getExpectedScore(oldElo, awayTeamAvgElo);
-      const newElo = oldElo + K_FACTOR * (homeActual - expectedScore);
+      const newElo = Math.round(oldElo + K_FACTOR * (homeActual - expectedScore));
       const change = newElo - oldElo;
       
       matchChanges.push({
         playerId: player.id,
         playerName: player.username,
-        oldElo: Math.round(oldElo),
-        change: Math.round(change),
-        newElo: Math.round(newElo),
+        oldElo,
+        change,
+        newElo,
         team: 'home'
       });
       
@@ -414,15 +414,15 @@ const calculateEloRatings = () => {
     match.awayPlayers.forEach(player => {
       const oldElo = eloRatings[player.id] || BASE_ELO;
       const expectedScore = getExpectedScore(oldElo, homeTeamAvgElo);
-      const newElo = oldElo + K_FACTOR * (awayActual - expectedScore);
+      const newElo = Math.round(oldElo + K_FACTOR * (awayActual - expectedScore));
       const change = newElo - oldElo;
       
       matchChanges.push({
         playerId: player.id,
         playerName: player.username,
-        oldElo: Math.round(oldElo),
-        change: Math.round(change),
-        newElo: Math.round(newElo),
+        oldElo,
+        change,
+        newElo,
         team: 'away'
       });
       
