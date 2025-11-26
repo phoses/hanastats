@@ -49,7 +49,7 @@ const chartData = computed(() => {
       borderColor: color,
       backgroundColor: color,
       tension: 0.1,
-      pointRadius: 3,
+      pointRadius: 1,
       pointHoverRadius: 5
     };
   });
