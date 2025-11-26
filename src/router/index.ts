@@ -1,3 +1,7 @@
+import { useGamesStore } from '@/stores/game';
+import { useLoadingStore } from '@/stores/loading';
+import { useMatchStore } from '@/stores/match';
+import { usePlayersStore } from '@/stores/player';
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
@@ -21,4 +25,4 @@ const router = createRouter({
   ]
 })
 
-export default router
+export default router;

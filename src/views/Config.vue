@@ -101,15 +101,6 @@ const teamNameShort = ref('');
 const game = ref({} as Game);
 const gameOpen = ref('');
 
-onMounted(async () => {
-  if (players.value === null) {
-    loadingStore.doLoading(async () => {
-      await playerStore.getPlayers();
-      await gameStore.getGames();
-    });
-  }
-});
-
 async function addPlayer() {
   loadingStore.doLoading(async () => {
     await playerStore.addplayer(playername.value);

@@ -81,16 +81,6 @@ const match = ref({
 const selectedPlayers = ref([]);
 const fixedTeams = ref(false);
 
-onMounted(async () => {
-  clear();
-  if (players.value === null) {
-    loadingStore.doLoading(async () => {
-      await playerStore.getPlayers();
-      await gameStore.getGames();
-    });
-  }
-});
-
 const clear = () => {
   match.value = {
     game: null as Game | null,

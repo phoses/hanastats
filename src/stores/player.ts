@@ -10,7 +10,7 @@ export interface Player {
 
 export const usePlayersStore = defineStore('player', () => {
 
-  const players = ref(null as Player[] | null);
+  const players = ref([] as Player[]);
   const dbRef = fbRef(getDatabase());
 
   async function getPlayers() {

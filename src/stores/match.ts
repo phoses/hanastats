@@ -1,9 +1,9 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { getDatabase, ref as fbRef, get, child, push } from "firebase/database";
 import _ from 'lodash';
 import type { Game, Team } from './game';
-import type { Player } from './player';
+import { usePlayersStore, type Player } from './player';
 
 export interface Match {
   id?: string;
@@ -21,17 +21,19 @@ export interface Match {
 
 export const useMatchStore = defineStore('match', () => {
   const matches = ref(null as Match[] | null)
-
   const dbRef = fbRef(getDatabase());
 
-  async function getMatches() {
+  async function getMatches(players: Player[]) {
     const snapshot = await get(child(dbRef, 'matches/'));
 
     if (snapshot.exists()) {
       matches.value = _.map(_.keys(snapshot.val()), (id) => {
+        const match = snapshot.val()[id];
         return {
           id,
-          ...snapshot.val()[id],
+          ...match,
+          homePlayers: _.map(match.homePlayers, (player) => _.find(players, { id: player.id })),
+          awayPlayers: _.map(match.awayPlayers, (player) => _.find(players, { id: player.id })),
         }
       });
     } else {

@@ -3,88 +3,104 @@
 
   <Accordion :multiple="true" :activeIndex="[1, 2]">
     <AccordionTab header="filters">
-      <SelectButton v-model="gameFilter" :options="distinctGames" optionLabel="name" multiple/>
-      <SelectButton v-model="playerCountFilter" :options="listOfPlayerCountOfMatches" optionLabel="name" multiple class="mt-3"/>
+      <SelectButton v-model="gameFilter" :options="distinctGames || []" optionLabel="name" multiple/>
+      <SelectButton v-model="playerCountFilter" :options="listOfPlayerCountOfMatches || []" optionLabel="name" multiple class="mt-3"/>
       <ToggleButton v-model="standingsAsWholeTeam" onLabel="Whole teams" offLabel="Whole teams" class="mt-3"/>
-      <SelectButton v-model="playersInSameTeam" :options="allPlayers" optionLabel="username" multiple class="mt-3"/>
-      <SelectButton v-model="playedMatchMonthFilter" :options="distinctPlayedMatchesMonths" multiple class="mt-3"/>
+      <SelectButton v-model="playersInSameTeam" :options="allPlayers || []" optionLabel="username" multiple class="mt-3"/>
+      <SelectButton v-model="playedMatchMonthFilter" :options="distinctPlayedMatchesMonths || []" multiple class="mt-3"/>
     </AccordionTab>
 
     <AccordionTab>
       <template #header >
-        <div onclick="event.stopPropagation();" class="flex align-items-center">
+        <div onclick="event.stopPropagation();" class="flex justify-content-between w-full">
+          <div class="flex align-items-center justify-content-center">
           standings
-          <SelectButton class="ml-3 quickfilter" v-model="enabledGamesFilter" :options="enabledGames" optionLabel="name" multiple/>
+            <SelectButton class="ml-3 quickfilter" v-model="enabledGamesFilter" :options="enabledGames" optionLabel="name" multiple/>
+          </div>
+
+            <div 
+            @click.stop="showGraph = !showGraph" 
+            :class="{'active': showGraph}"
+            class="flex align-items-center justify-content-center mr-3 px-2 graph">
+            graph
+          </div>
+        
         </div>
       </template>
 
-      <DataTable
-        v-model:expandedRows="expandedRows"
-        :value="standings"
-        :rowClass="({validResult}) => !validResult ? 'row-disabled' : undefined"
-        dataKey="player">
-        <Column field="player" header="player">
-          <template #body="slotProps">
-            <div class="flex align-items-center">
-              <a href="javascript:void(0)" @click.stop="onRowExpand(slotProps.data.player)">{{ slotProps.data.player }}</a>
-              <template v-if="slotProps.data.loseOrWinStreakLatestStreak > 4">
-                <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'W'">🔥</span>
-                <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'L'">❄️</span>
-              </template>
-              <span v-if="slotProps.data.ownsGame" class="color-invert">🎮</span>
-            </div>
-          </template>
-        </Column>
-        <Column field="matches" header="gp"></Column>
-        <Column field="wins" header="w"></Column>
-        <Column field="losses" header="l"></Column>
-        <Column v-if="showDraws" field="draws" header="d"></Column>
-        <Column field="overtimelosses" header="ot"></Column>
-        <Column field="goalsDiff" header="g-diff"></Column>
-        <Column field="loseOrWinStreakLatestStreak" header="s">
-          <template #body="slotProps">
-            {{ slotProps.data.loseOrWinStreakLatestStreak + slotProps.data.loseOrWinStreakLatestStreakType }}
-          </template>
-        </Column>
-        <Column field="playerPointsOfPercantage" header="p%"></Column>
-        <Column v-if="!standingsAsWholeTeam" field="elo" header="elo"></Column>
-        <template #expansion="slotProps">
-          <div class="py-2">
-            Games played: {{ slotProps.data.matches }}<br>
-            <div class="pt-2">
-              Wins: {{ slotProps.data.wins }}<br>
-              <div class="pl-2">
-                Regulartime wins: {{ slotProps.data.regularTimeWins }} (points: {{ slotProps.data.pointsForRegularTimeWins }})<br>
-                Overtime wins: {{ slotProps.data.overtimewins }} (points: {{ slotProps.data.pointsForOverTimeWin }})<br>
+      <div v-if="!showGraph">
+        <DataTable
+          v-model:expandedRows="expandedRows"
+          :value="standings"
+          :rowClass="({validResult}) => !validResult ? 'row-disabled' : undefined"
+          dataKey="player">
+          <Column field="player" header="player">
+            <template #body="slotProps">
+              <div class="flex align-items-center">
+                <a href="javascript:void(0)" @click.stop="onRowExpand(slotProps.data.player)">{{ slotProps.data.player }}</a>
+                <template v-if="slotProps.data.loseOrWinStreakLatestStreak > 4">
+                  <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'W'">🔥</span>
+                  <span v-if="slotProps.data.loseOrWinStreakLatestStreakType === 'L'">❄️</span>
+                </template>
+                <span v-if="slotProps.data.ownsGame" class="color-invert">🎮</span>
+              </div>
+            </template>
+          </Column>
+          <Column field="matches" header="gp"></Column>
+          <Column field="wins" header="w"></Column>
+          <Column field="losses" header="l"></Column>
+          <Column v-if="showDraws" field="draws" header="d"></Column>
+          <Column field="overtimelosses" header="ot"></Column>
+          <Column field="goalsDiff" header="g-diff"></Column>
+          <Column field="loseOrWinStreakLatestStreak" header="s">
+            <template #body="slotProps">
+              {{ slotProps.data.loseOrWinStreakLatestStreak + slotProps.data.loseOrWinStreakLatestStreakType }}
+            </template>
+          </Column>
+          <Column field="playerPointsOfPercantage" header="p%"></Column>
+          <Column v-if="!standingsAsWholeTeam" field="elo" header="elo"></Column>
+          <template #expansion="slotProps">
+            <div class="py-2">
+              Games played: {{ slotProps.data.matches }}<br>
+              <div class="pt-2">
+                Wins: {{ slotProps.data.wins }}<br>
+                <div class="pl-2">
+                  Regulartime wins: {{ slotProps.data.regularTimeWins }} (points: {{ slotProps.data.pointsForRegularTimeWins }})<br>
+                  Overtime wins: {{ slotProps.data.overtimewins }} (points: {{ slotProps.data.pointsForOverTimeWin }})<br>
+                </div>
+              </div>
+              <div class="pt-2">
+                Losses: {{ slotProps.data.losses }}<br>
+                <div class="pl-2">
+                  Regulartime losses: {{ slotProps.data.regularTimeLosses }}<br>
+                  Overtime losses: {{ slotProps.data.overtimelosses }} (points: {{ slotProps.data.pointsForOverTimeLose }})<br>
+                </div>
+              </div>
+              <div class="pt-2" v-if="showDraws && slotProps.data.draws > 0">
+                Draws: {{ slotProps.data.draws }} (points: {{ slotProps.data.pointsForDraws }})
+              </div>
+              <div class="pt-2">
+                Goals for: {{ slotProps.data.goalsFor }}<br>
+                Goals against: {{ slotProps.data.goalsAgainst }}<br>
+                Goals diff: {{ slotProps.data.goalsDiff }}<br>
+              </div>
+              <div class="pt-2">
+                Points: {{ slotProps.data.points }} (
+                  {{ slotProps.data.pointsForRegularTimeWins }} + {{ slotProps.data.pointsForOverTimeWin }} + {{ slotProps.data.pointsForOverTimeLose }} + {{ slotProps.data.pointsForDraws }})<br>
+                Maximum points: {{ slotProps.data.maximumPoints }}<br>
+                Points of percentage: {{ slotProps.data.playerPointsOfPercantage }} ({{ slotProps.data.points }}  / {{ slotProps.data.maximumPoints }})<br>
+              </div>
+              <div class="pt-2" v-if="!standingsAsWholeTeam">
+                ELO Rating: {{ slotProps.data.elo }}<br>
               </div>
             </div>
-            <div class="pt-2">
-              Losses: {{ slotProps.data.losses }}<br>
-              <div class="pl-2">
-                Regulartime losses: {{ slotProps.data.regularTimeLosses }}<br>
-                Overtime losses: {{ slotProps.data.overtimelosses }} (points: {{ slotProps.data.pointsForOverTimeLose }})<br>
-              </div>
-            </div>
-            <div class="pt-2" v-if="showDraws && slotProps.data.draws > 0">
-              Draws: {{ slotProps.data.draws }} (points: {{ slotProps.data.pointsForDraws }})
-            </div>
-            <div class="pt-2">
-              Goals for: {{ slotProps.data.goalsFor }}<br>
-              Goals against: {{ slotProps.data.goalsAgainst }}<br>
-              Goals diff: {{ slotProps.data.goalsDiff }}<br>
-            </div>
-            <div class="pt-2">
-              Points: {{ slotProps.data.points }} (
-                {{ slotProps.data.pointsForRegularTimeWins }} + {{ slotProps.data.pointsForOverTimeWin }} + {{ slotProps.data.pointsForOverTimeLose }} + {{ slotProps.data.pointsForDraws }})<br>
-              Maximum points: {{ slotProps.data.maximumPoints }}<br>
-              Points of percentage: {{ slotProps.data.playerPointsOfPercantage }} ({{ slotProps.data.points }}  / {{ slotProps.data.maximumPoints }})<br>
-            </div>
-            <div class="pt-2" v-if="!standingsAsWholeTeam">
-              ELO Rating: {{ slotProps.data.elo }}<br>
-            </div>
-          </div>
-        </template>
-      </DataTable>
+          </template>
+        </DataTable>
+      </div>
+
+      <div v-else>
+        <EloGraph v-if="filteredMatches" :matches="filteredMatches" :players="players" />
+      </div>
     </AccordionTab>
 
     <AccordionTab>
@@ -141,7 +157,6 @@
 </template>
 
 <script setup lang="ts">
-import { useLoadingStore } from '@/stores/loading';
 import { useMatchStore } from '@/stores/match';
 import { computed, onMounted, ref, watch } from 'vue';
 import _ from 'lodash';
@@ -150,13 +165,15 @@ import AccordionTab from 'primevue/accordiontab';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import SelectButton from 'primevue/selectbutton';
+import Button from 'primevue/button';
 import moment from 'moment';
 import { useGamesStore, type Game } from '@/stores/game';
 import ToggleButton from 'primevue/togglebutton';
 import { usePlayersStore, type Player } from '@/stores/player';
+import EloGraph from '@/components/EloGraph.vue';
+import { calculateEloRatings } from '@/utils/elo';
 
 const matchStore = useMatchStore();
-const loadingStore = useLoadingStore();
 const gameStore = useGamesStore();
 const playerStore = usePlayersStore();
 
@@ -166,6 +183,7 @@ const enabledGamesFilter = ref([] as Game[]);
 const standingsAsWholeTeam = ref(false)
 const playersInSameTeam = ref([] as Player[]);
 const playedMatchMonthFilter = ref([] as string[]);
+const showGraph = ref(false);
 const games = computed(() => gameStore.games);
 const allPlayers = computed(() => playerStore.players);
 
@@ -180,16 +198,6 @@ const showDraws = computed(() => {
 
 const expandedRows = ref({} as any);
 const expandedMatches = ref({} as any);
-
-onMounted(async () => {
-  if (matches.value === null) {
-    loadingStore.doLoading(async () => {
-      await matchStore.getMatches();
-      await gameStore.getGames();
-      await playerStore.getPlayers();
-    });
-  }
-});
 
 const onRowExpand = (player: any) => {
   if (expandedRows.value[player]) {
@@ -273,7 +281,7 @@ const matches = computed(() => {
     return null;
   }
 
-  const { matchEloChanges } = calculateEloRatings();
+  const { matchEloChanges } = calculateEloRatings(filteredMatches.value || [], players.value);
 
   return _.chain(filteredMatches.value)
     .map(match => {
@@ -341,108 +349,13 @@ const uniqueTeams = computed(() => {
   ], players => players.map(p => p.id).join(','));
 });
 
-const calculateEloRatings = () => {
-  const K_FACTOR = 32; // Standard K-factor for ELO
-  const BASE_ELO = 1500;
-  
-  // Initialize ELO ratings for all individual players
-  const eloRatings: { [key: string]: number } = {};
-  
-  // Store ELO changes per match
-  const matchEloChanges: { [matchId: string]: any[] } = {};
-  
-  // Initialize all players with base ELO
-  players.value.forEach(playerArray => {
-    const playerId = playerArray[0].id;
-    eloRatings[playerId] = BASE_ELO;
-  });
-  
-  // Calculate expected score
-  const getExpectedScore = (ratingA: number, ratingB: number): number => {
-    return 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
-  };
-  
-  // Process matches chronologically
-  const sortedMatches = _.sortBy(filteredMatches.value, 'played');
-  
-  sortedMatches.forEach(match => {
-    // Calculate average ELO for each team
-    const homePlayersElo = match.homePlayers.map(p => eloRatings[p.id] || BASE_ELO);
-    const awayPlayersElo = match.awayPlayers.map(p => eloRatings[p.id] || BASE_ELO);
-    
-    const homeTeamAvgElo = _.mean(homePlayersElo);
-    const awayTeamAvgElo = _.mean(awayPlayersElo);
-    
-    // Determine actual scores (1 for win, 0.5 for draw, 0 for loss)
-    let homeActual: number;
-    let awayActual: number;
-    
-    if (match.homeScore > match.awayScore) {
-      homeActual = 1;
-      awayActual = 0;
-    } else if (match.homeScore < match.awayScore) {
-      homeActual = 0;
-      awayActual = 1;
-    } else {
-      homeActual = 0.5;
-      awayActual = 0.5;
-    }
-    
-    // Track ELO changes for this match
-    const matchChanges: any[] = [];
-    
-    // Update ELO for each home player against average away team ELO
-    match.homePlayers.forEach(player => {
-      const oldElo = eloRatings[player.id] || BASE_ELO;
-      const expectedScore = getExpectedScore(oldElo, awayTeamAvgElo);
-      const newElo = Math.round(oldElo + K_FACTOR * (homeActual - expectedScore));
-      const change = newElo - oldElo;
-      
-      matchChanges.push({
-        playerId: player.id,
-        playerName: player.username,
-        oldElo,
-        change,
-        newElo,
-        team: 'home'
-      });
-      
-      eloRatings[player.id] = newElo;
-    });
-    
-    // Update ELO for each away player against average home team ELO
-    match.awayPlayers.forEach(player => {
-      const oldElo = eloRatings[player.id] || BASE_ELO;
-      const expectedScore = getExpectedScore(oldElo, homeTeamAvgElo);
-      const newElo = Math.round(oldElo + K_FACTOR * (awayActual - expectedScore));
-      const change = newElo - oldElo;
-      
-      matchChanges.push({
-        playerId: player.id,
-        playerName: player.username,
-        oldElo,
-        change,
-        newElo,
-        team: 'away'
-      });
-      
-      eloRatings[player.id] = newElo;
-    });
-    
-    if (match.id) {
-      matchEloChanges[match.id] = matchChanges;
-    }
-  });
-  
-  return { eloRatings, matchEloChanges };
-};
 
 const standings = computed(() => {
   if (matchStore.matches === null) {
     return null;
   }
 
-  const { eloRatings } = calculateEloRatings();
+  const { eloRatings } = calculateEloRatings(filteredMatches.value || [], players.value);
 
   return _.chain(standingsAsWholeTeam.value ? uniqueTeams.value : players.value)
     .map(playerOrTeam => {
@@ -616,7 +529,7 @@ const standings = computed(() => {
   border-bottom: 1px solid #d9d9d9;
 }
 
-:deep(.p-selectbutton .p-highlight) {
+:deep(.p-selectbutton .p-highlight), .active-graph {
   background-color: white;
   color: #1c1c1c;
 }
@@ -676,4 +589,15 @@ const standings = computed(() => {
   color: #ef4444;
 }
 
+.graph {
+  border-radius: 4px;
+  background-color: #2f2f2f;;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  &.active {
+    background-color: white;
+    color: #2f2f2f;
+  }
+}
 </style>

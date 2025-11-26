@@ -19,16 +19,25 @@
   import { useUserStore } from './stores/user';
   import 'primeicons/primeicons.css'
   import Menubar from 'primevue/menubar';
+import { useGamesStore } from './stores/game';
+import { usePlayersStore } from './stores/player';
+import { useMatchStore } from './stores/match';
 
   const router = useRouter()
   const userStore = useUserStore();
   const loadingStore = useLoadingStore();
   const initializing = ref(true);
+  const gameStore = useGamesStore();
+  const playerStore = usePlayersStore();
+  const matchStore = useMatchStore();
 
   onMounted(async () => {
     loadingStore.doLoading((async () => {
       initializing.value = true;
       await userStore.init();
+      await playerStore.getPlayers();
+      await gameStore.getGames();
+      await matchStore.getMatches(playerStore.players);
       initializing.value = false;
     }));
   });
