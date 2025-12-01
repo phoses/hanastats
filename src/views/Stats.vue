@@ -133,9 +133,20 @@
           </div>
         </div>
         <div v-if="match.id && expandedMatches[match.id] && match.eloChanges.length > 0" class="elo-details pl-3 pt-2 pb-2">
-          <div class="font-bold mb-1">ELO Changes:</div>
-          <div v-for="change in match.eloChanges" :key="change.playerId" class="elo-change">
-            {{ change.playerName }}: {{ change.oldElo }} <span :class="change.change >= 0 ? 'text-green-500' : 'text-red-500'">{{ change.change >= 0 ? '+' : '' }}{{ change.change }}</span> = {{ change.newElo }}
+          <div class="font-bold mb-2">ELO Changes:</div>
+          
+          <div class="mb-3">
+            <div class="text-sm opacity-80 mb-1">Home Team (Avg: {{ Math.round(match.eloChanges.find(c => c.team === 'home')?.teamAvgElo || 0) }})</div>
+            <div v-for="change in match.eloChanges.filter(c => c.team === 'home')" :key="change.playerId" class="elo-change">
+              {{ change.playerName }}: {{ change.oldElo }} <span :class="change.change >= 0 ? 'text-green-500' : 'text-red-500'">{{ change.change >= 0 ? '+' : '' }}{{ change.change }}</span> = {{ change.newElo }}
+            </div>
+          </div>
+          
+          <div>
+            <div class="text-sm opacity-80 mb-1">Away Team (Avg: {{ Math.round(match.eloChanges.find(c => c.team === 'away')?.teamAvgElo || 0) }})</div>
+            <div v-for="change in match.eloChanges.filter(c => c.team === 'away')" :key="change.playerId" class="elo-change">
+              {{ change.playerName }}: {{ change.oldElo }} <span :class="change.change >= 0 ? 'text-green-500' : 'text-red-500'">{{ change.change >= 0 ? '+' : '' }}{{ change.change }}</span> = {{ change.newElo }}
+            </div>
           </div>
         </div>
       </div>

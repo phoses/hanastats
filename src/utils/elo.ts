@@ -22,6 +22,8 @@ export interface EloChange {
   change: number;
   newElo: number;
   team: 'home' | 'away';
+  teamAvgElo: number;
+  opponentTeamAvgElo: number;
 }
 
 export interface EloHistoryPoint {
@@ -50,6 +52,61 @@ const getExpectedScore = (ratingA: number, ratingB: number): number => {
 };
 
 /**
+ * Calculate team average ELO rating
+ */
+const calculateTeamAvgElo = (
+  players: Player[],
+  eloRatings: { [key: string]: number }
+): number => {
+  const playersElo = players.map(p => eloRatings[p.id] || BASE_ELO);
+  return _.mean(playersElo);
+};
+
+/**
+ * Determine actual scores based on match result
+ * Returns [homeActual, awayActual] where 1 = win, 0.5 = draw, 0 = loss
+ */
+const getMatchOutcome = (homeScore: number, awayScore: number): [number, number] => {
+  if (homeScore > awayScore) {
+    return [1, 0];
+  } else if (homeScore < awayScore) {
+    return [0, 1];
+  } else {
+    return [0.5, 0.5];
+  }
+};
+
+/**
+ * Calculate margin of victory multiplier
+ * Uses logarithmic scaling: ln(|GoalDifference| + 1)
+ * Returns at least 1.0 to ensure draws still have ELO changes
+ */
+const getMarginOfVictoryMultiplier = (goalDifference: number): number => {
+  const absDiff = Math.abs(goalDifference);
+  // For draws or very close games, use multiplier of 1
+  if (absDiff === 0) {
+    return 1.0;
+  }
+  // Otherwise use logarithmic scaling, with minimum of 1
+  return Math.max(1.0, Math.log(absDiff + 1));
+};
+
+/**
+ * Calculate ELO change for a team (to be applied to all players equally)
+ */
+const calculateTeamEloChange = (
+  teamAvgElo: number,
+  opponentTeamAvgElo: number,
+  actualScore: number,
+  goalDifference: number
+): number => {
+  const expectedScore = getExpectedScore(teamAvgElo, opponentTeamAvgElo);
+  const movMultiplier = getMarginOfVictoryMultiplier(goalDifference);
+  const dynamicK = K_FACTOR * movMultiplier;
+  return Math.round(dynamicK * (actualScore - expectedScore));
+};
+
+/**
  * Calculate ELO ratings for all players based on match history
  * Returns current ELO ratings and changes per match
  */
@@ -74,63 +131,55 @@ export const calculateEloRatings = (
   
   sortedMatches.forEach(match => {
     // Calculate average ELO for each team
-    const homePlayersElo = match.homePlayers.map(p => eloRatings[p.id] || BASE_ELO);
-    const awayPlayersElo = match.awayPlayers.map(p => eloRatings[p.id] || BASE_ELO);
-    
-    const homeTeamAvgElo = _.mean(homePlayersElo);
-    const awayTeamAvgElo = _.mean(awayPlayersElo);
+    const homeTeamAvgElo = calculateTeamAvgElo(match.homePlayers, eloRatings);
+    const awayTeamAvgElo = calculateTeamAvgElo(match.awayPlayers, eloRatings);
     
     // Determine actual scores (1 for win, 0.5 for draw, 0 for loss)
-    let homeActual: number;
-    let awayActual: number;
+    const [homeActual, awayActual] = getMatchOutcome(match.homeScore, match.awayScore);
     
-    if (match.homeScore > match.awayScore) {
-      homeActual = 1;
-      awayActual = 0;
-    } else if (match.homeScore < match.awayScore) {
-      homeActual = 0;
-      awayActual = 1;
-    } else {
-      homeActual = 0.5;
-      awayActual = 0.5;
-    }
+    // Calculate goal difference for margin of victory
+    const goalDifference = match.homeScore - match.awayScore;
+    
+    // Calculate ELO change based on team average (same for all players on each team)
+    const homeEloChange = calculateTeamEloChange(homeTeamAvgElo, awayTeamAvgElo, homeActual, goalDifference);
+    const awayEloChange = calculateTeamEloChange(awayTeamAvgElo, homeTeamAvgElo, awayActual, goalDifference);
     
     // Track ELO changes for this match
     const matchChanges: EloChange[] = [];
     
-    // Update ELO for each home player against average away team ELO
+    // Apply the same ELO change to all home players
     match.homePlayers.forEach(player => {
       const oldElo = eloRatings[player.id] || BASE_ELO;
-      const expectedScore = getExpectedScore(oldElo, awayTeamAvgElo);
-      const newElo = Math.round(oldElo + K_FACTOR * (homeActual - expectedScore));
-      const change = newElo - oldElo;
+      const newElo = oldElo + homeEloChange;
       
       matchChanges.push({
         playerId: player.id,
         playerName: player.username,
         oldElo,
-        change,
+        change: homeEloChange,
         newElo,
-        team: 'home'
+        team: 'home',
+        teamAvgElo: homeTeamAvgElo,
+        opponentTeamAvgElo: awayTeamAvgElo
       });
       
       eloRatings[player.id] = newElo;
     });
     
-    // Update ELO for each away player against average home team ELO
+    // Apply the same ELO change to all away players
     match.awayPlayers.forEach(player => {
       const oldElo = eloRatings[player.id] || BASE_ELO;
-      const expectedScore = getExpectedScore(oldElo, homeTeamAvgElo);
-      const newElo = Math.round(oldElo + K_FACTOR * (awayActual - expectedScore));
-      const change = newElo - oldElo;
+      const newElo = oldElo + awayEloChange;
       
       matchChanges.push({
         playerId: player.id,
         playerName: player.username,
         oldElo,
-        change,
+        change: awayEloChange,
         newElo,
-        team: 'away'
+        team: 'away',
+        teamAvgElo: awayTeamAvgElo,
+        opponentTeamAvgElo: homeTeamAvgElo
       });
       
       eloRatings[player.id] = newElo;
@@ -175,33 +224,26 @@ export const calculateEloHistory = (
   sortedMatches.forEach(match => {
     if (!match.played) return;
     
-    const homePlayersElo = match.homePlayers.map(p => eloRatings[p.id] || BASE_ELO);
-    const awayPlayersElo = match.awayPlayers.map(p => eloRatings[p.id] || BASE_ELO);
+    // Calculate average ELO for each team
+    const homeTeamAvgElo = calculateTeamAvgElo(match.homePlayers, eloRatings);
+    const awayTeamAvgElo = calculateTeamAvgElo(match.awayPlayers, eloRatings);
     
-    const homeTeamAvgElo = _.mean(homePlayersElo);
-    const awayTeamAvgElo = _.mean(awayPlayersElo);
+    // Determine actual scores (1 for win, 0.5 for draw, 0 for loss)
+    const [homeActual, awayActual] = getMatchOutcome(match.homeScore, match.awayScore);
     
-    let homeActual: number;
-    let awayActual: number;
+    // Calculate goal difference for margin of victory
+    const goalDifference = match.homeScore - match.awayScore;
     
-    if (match.homeScore > match.awayScore) {
-      homeActual = 1;
-      awayActual = 0;
-    } else if (match.homeScore < match.awayScore) {
-      homeActual = 0;
-      awayActual = 1;
-    } else {
-      homeActual = 0.5;
-      awayActual = 0.5;
-    }
+    // Calculate ELO change based on team average (same for all players on each team)
+    const homeEloChange = calculateTeamEloChange(homeTeamAvgElo, awayTeamAvgElo, homeActual, goalDifference);
+    const awayEloChange = calculateTeamEloChange(awayTeamAvgElo, homeTeamAvgElo, awayActual, goalDifference);
     
     const matchDate = typeof match.played === 'number' ? match.played : new Date(match.played).getTime();
     
-    // Update ELO for home players
+    // Apply the same ELO change to all home players
     match.homePlayers.forEach(player => {
       const oldElo = eloRatings[player.id] || BASE_ELO;
-      const expectedScore = getExpectedScore(oldElo, awayTeamAvgElo);
-      const newElo = Math.round(oldElo + K_FACTOR * (homeActual - expectedScore));
+      const newElo = oldElo + homeEloChange;
       eloRatings[player.id] = newElo;
       
       // Initialize player history if not exists
@@ -211,11 +253,10 @@ export const calculateEloHistory = (
       playerEloHistory[player.username].push({ date: matchDate, elo: newElo });
     });
     
-    // Update ELO for away players
+    // Apply the same ELO change to all away players
     match.awayPlayers.forEach(player => {
       const oldElo = eloRatings[player.id] || BASE_ELO;
-      const expectedScore = getExpectedScore(oldElo, homeTeamAvgElo);
-      const newElo = Math.round(oldElo + K_FACTOR * (awayActual - expectedScore));
+      const newElo = oldElo + awayEloChange;
       eloRatings[player.id] = newElo;
       
       // Initialize player history if not exists
