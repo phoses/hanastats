@@ -15,16 +15,22 @@
         <div onclick="event.stopPropagation();" class="flex justify-content-between w-full">
           <div class="flex align-items-center justify-content-center">
           standings
+            <div
+              @click.stop="enabledGamesFilter = []; gameFilter = []"
+              :class="{'active': enabledGamesFilter.length === 0 && gameFilter.length === 0}"
+              class="ml-3 px-2 filter-button"
+            >
+              all
+            </div>
             <SelectButton class="ml-3 quickfilter" v-model="enabledGamesFilter" :options="enabledGames" optionLabel="name" multiple/>
           </div>
 
-            <div 
+          <div
             @click.stop="showGraph = !showGraph" 
             :class="{'active': showGraph}"
-            class="flex align-items-center justify-content-center mr-3 px-2 graph">
+            class="mr-3 px-2 filter-button">
             graph
           </div>
-        
         </div>
       </template>
 
@@ -600,7 +606,7 @@ const standings = computed(() => {
   color: #ef4444;
 }
 
-.graph {
+.filter-button {
   border-radius: 4px;
   background-color: #2f2f2f;;
   color: white;
