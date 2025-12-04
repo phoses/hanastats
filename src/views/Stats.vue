@@ -25,11 +25,13 @@
             <SelectButton class="ml-3 quickfilter" v-model="enabledGamesFilter" :options="enabledGames" optionLabel="name" multiple/>
           </div>
 
-          <div
-            @click.stop="showGraph = !showGraph" 
-            :class="{'active': showGraph}"
-            class="mr-3 px-2 filter-button">
-            graph
+          <div class="flex align-items-center justify-content-center">
+            <div
+              @click.stop="showGraph = !showGraph" 
+              :class="{'active': showGraph}"
+              class="mr-3 px-2 filter-button">
+              graph
+            </div>
           </div>
         </div>
       </template>
