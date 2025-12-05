@@ -42,7 +42,7 @@ export interface EloHistoryResult {
 }
 
 const K_FACTOR = 32; // Standard K-factor for ELO
-const BASE_ELO = 1500;
+export const BASE_ELO = 1500;
 
 /**
  * Calculate expected score for ELO rating system
