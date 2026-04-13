@@ -88,7 +88,8 @@ import { useMatchStore } from './stores/match';
     display: flex;
     justify-content: center;
     width: 100%;
-    gap: 3rem;
+    gap: 1rem;
+    flex-wrap: nowrap;
   }
 }
 

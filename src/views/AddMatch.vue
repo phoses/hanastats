@@ -40,7 +40,7 @@
     <template v-if="selectedPlayers.length > 1">
       <h3 v-if="selectedPlayers.length > 0" class="mt-5">teams</h3>
 
-      <div class="flex">
+      <div class="flex gap-2">
         <TeamScore v-model="match.homeScore" class="w-6">
           <template #teamName>home</template>
           <template #team v-if="match.homeTeam">{{match.homeTeam.name}}</template>
@@ -84,6 +84,7 @@ import SelectButton from 'primevue/selectbutton';
 import RadioButton from 'primevue/radiobutton';
 import TeamScore from '@/components/TeamScore.vue';
 import _ from 'lodash';
+import Checkbox from 'primevue/checkbox';
 
 const matchStore = useMatchStore();
 const gameStore = useGamesStore();

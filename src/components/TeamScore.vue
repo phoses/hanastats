@@ -13,7 +13,7 @@
       <div class="text-4xl mb-3">{{ model }}</div>
       <div class="flex justify-content-center">
         <Button @click="incrementScore" icon="pi pi-plus"/>
-        <Button @click="decrementScore" icon="pi pi-minus" class="ml-4"/>
+        <Button @click="decrementScore" icon="pi pi-minus" class="ml-1"/>
       </div>
     </div>
   </div>
