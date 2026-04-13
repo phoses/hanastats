@@ -83,6 +83,13 @@ import { useMatchStore } from './stores/match';
 
 :deep(.p-menubar) {
   padding: 0;
+
+  :deep(.p-menubar-root-list) {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    gap: 3rem;
+  }
 }
 
 </style>

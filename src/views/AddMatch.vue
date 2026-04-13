@@ -25,7 +25,16 @@
       </div>
 
       <h3 class="mt-5">players</h3>
-      <SelectButton v-model="selectedPlayers" :options="players" optionLabel="username" multiple/>
+      <SelectButton 
+        v-model="selectedPlayers" 
+        :options="players" 
+        optionLabel="username" 
+        multiple
+      >
+        <template #option="{ option }">
+          <div class="text-center">{{ option.username }}</div>
+        </template>
+      </SelectButton>
     </template>
 
     <template v-if="selectedPlayers.length > 1">
@@ -85,7 +94,7 @@ const games = computed(() => _.chain(gameStore.games)
   .sortBy('id')
   .reverse()
   .value());
-const players = computed(() => playerStore.players);
+const players = computed(() => _.sortBy(playerStore.players, player => player.username.toLowerCase()));
 
 const match = ref({
     game: null as Game | null,
@@ -166,7 +175,7 @@ const findBestTeamSplit = (playersWithElo: { player: Player, elo: number }[]): {
   const n = playersWithElo.length;
   const halfSize = Math.floor(n / 2);
   
-  let bestSplit = { home: [] as Player[], away: [] as Player[], diff: Infinity };
+  let bestSplit = { home: [] as Player[], away: [] as Player[], diff: Infinity, homeAvgElo: 0, awayAvgElo: 0 };
   
   // For odd numbers, try both possible team sizes to find best balance
   const sizesToTry = n % 2 === 0 ? [halfSize] : [halfSize, halfSize + 1];
@@ -187,17 +196,24 @@ const findBestTeamSplit = (playersWithElo: { player: Player, elo: number }[]): {
         bestSplit = {
           home: homeTeam.map(p => p.player),
           away: awayTeam.map(p => p.player),
-          diff
+          diff,
+          homeAvgElo,
+          awayAvgElo
         };
       }
     }
   }
-  
-  // Add randomness by shuffling within teams
-  return {
-    home: _.shuffle(bestSplit.home),
-    away: _.shuffle(bestSplit.away)
-  };
+
+  const { home, away, homeAvgElo, awayAvgElo } = bestSplit;
+  const betterElo = Math.max(homeAvgElo, awayAvgElo);
+  const worseElo = Math.min(homeAvgElo, awayAvgElo);
+  const pWorseHome = Math.min(1, (betterElo / Math.max(worseElo, 1)) * 100 / 2 / 100);
+  const worsePlayers = homeAvgElo <= awayAvgElo ? home : away;
+  const betterPlayers = homeAvgElo <= awayAvgElo ? away : home;
+  if (Math.random() < pWorseHome) {
+    return { home: worsePlayers, away: betterPlayers };
+  }
+  return { home: betterPlayers, away: worsePlayers };
 };
 
 // Generate all combinations of size k from array
@@ -236,8 +252,19 @@ const snakeDraftTeams = (playersWithElo: { player: Player, elo: number }[]): { h
       }
     }
   });
-  
-  return { home, away };
+
+  const homeIds = new Set(home.map(p => p.id));
+  const homeAvgElo = _.meanBy(playersWithElo.filter(pe => homeIds.has(pe.player.id)), 'elo');
+  const awayAvgElo = _.meanBy(playersWithElo.filter(pe => !homeIds.has(pe.player.id)), 'elo');
+  const betterElo = Math.max(homeAvgElo, awayAvgElo);
+  const worseElo = Math.min(homeAvgElo, awayAvgElo);
+  const pWorseHome = Math.min(1, (betterElo / Math.max(worseElo, 1)) * 100 / 2 / 100);
+  const worsePlayers = homeAvgElo <= awayAvgElo ? home : away;
+  const betterPlayers = homeAvgElo <= awayAvgElo ? away : home;
+  if (Math.random() < pWorseHome) {
+    return { home: _.shuffle(worsePlayers), away: _.shuffle(betterPlayers) };
+  }
+  return { home: _.shuffle(betterPlayers), away: _.shuffle(worsePlayers) };
 };
 
 watch(selectedPlayers, (newVal: Player[]) => {
@@ -319,6 +346,13 @@ const awayTeamAvgElo = computed(() => {
 :deep(.p-highlight) {
   background-color: white;
   color: #1c1c1c;
+}
+
+:deep(.p-button.p-component) {
+  width:100px;
+  margin: 0.25rem;
+  text-align: center;
+  display: inline-block;
 }
 
 </style>
