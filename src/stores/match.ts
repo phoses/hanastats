@@ -46,8 +46,11 @@ export const useMatchStore = defineStore('match', () => {
       ...match,
       played: new Date().getTime(),
     }
-    await push(fbRef(getDatabase(), 'matches/'), match);
-    matches.value?.push(match);
+    const addedMatch = await push(fbRef(getDatabase(), 'matches/'), match);
+    matches.value?.push({
+      id: addedMatch.key!,
+      ...match,
+    });
   }
 
   return { matches, getMatches, addMatch }
