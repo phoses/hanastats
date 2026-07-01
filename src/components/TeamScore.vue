@@ -19,20 +19,20 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import Button from 'primevue/button';
 
-  const model = defineModel()
+const model = defineModel<number>({ required: true })
 
-  function incrementScore() {
-    model.value++
-  }
+function incrementScore() {
+  model.value++
+}
 
-  function decrementScore() {
-    if (model.value > 0) {
-      model.value--
-    }
+function decrementScore() {
+  if (model.value > 0) {
+    model.value--
   }
+}
 
 </script>
 
