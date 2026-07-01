@@ -56,6 +56,13 @@
   </div>
 
   <template v-if="userStore.currentUser?.role === 'admin'">
+    <h2>matches cache</h2>
+    <p>Current version: {{ matchesVersion }}</p>
+    <p class="text-sm opacity-80">Bump version after correcting or deleting matches in Firebase to force all users to refresh their cached data.</p>
+    <Button @click="invalidateMatchesCache" label="invalidate matches cache" class="mt-2"/>
+  </template>
+
+  <template v-if="userStore.currentUser?.role === 'admin'">
     <h2>add game</h2>
 
     <label>name</label>
@@ -80,6 +87,7 @@
 <script setup lang="ts">
 import { useGamesStore, type Game, type Team } from '@/stores/game';
 import { useLoadingStore } from '@/stores/loading';
+import { useMatchStore } from '@/stores/match';
 import { usePlayersStore } from '@/stores/player';
 import { useUserStore } from '@/stores/user';
 import Button from 'primevue/button';
@@ -90,6 +98,7 @@ import _ from 'lodash';
 
 const gameStore = useGamesStore();
 const playerStore = usePlayersStore();
+const matchStore = useMatchStore();
 const userStore = useUserStore();
 const loadingStore = useLoadingStore();
 
@@ -100,6 +109,19 @@ const teamName = ref('');
 const teamNameShort = ref('');
 const game = ref({} as Game);
 const gameOpen = ref('');
+const matchesVersion = ref(0);
+
+onMounted(async () => {
+  matchesVersion.value = await matchStore.getMatchesVersion();
+});
+
+async function invalidateMatchesCache() {
+  loadingStore.doLoading(async () => {
+    await matchStore.bumpMatchesVersion();
+    matchesVersion.value = await matchStore.getMatchesVersion();
+    await matchStore.getMatches(playerStore.players);
+  });
+}
 
 async function addPlayer() {
   loadingStore.doLoading(async () => {
