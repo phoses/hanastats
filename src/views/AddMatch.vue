@@ -25,6 +25,10 @@
       </div>
 
       <h3 class="mt-5">players</h3>
+      <div class="mb-2 flex justify-content-center align-items-center gap-2">
+        <label for="show-all-players" class="mr-2">show all</label>
+        <InputSwitch v-model="showAllPlayers" inputId="show-all-players" />
+      </div>
       <SelectButton 
         v-model="selectedPlayers" 
         :options="players" 
@@ -78,7 +82,8 @@ import { useLoadingStore } from '@/stores/loading';
 import { usePlayersStore, type Player } from '@/stores/player';
 import { calculateEloRatings, BASE_ELO } from '@/utils/elo';
 import Button from 'primevue/button';
-import { ref, onMounted, computed, watch } from 'vue';
+import InputSwitch from 'primevue/inputswitch';
+import { ref, computed, watch } from 'vue';
 import Dropdown from 'primevue/dropdown';
 import SelectButton from 'primevue/selectbutton';
 import RadioButton from 'primevue/radiobutton';
@@ -95,8 +100,6 @@ const games = computed(() => _.chain(gameStore.games)
   .sortBy('id')
   .reverse()
   .value());
-const players = computed(() => _.sortBy(playerStore.players, player => player.username.toLowerCase()));
-
 const match = ref({
     game: null as Game | null,
     homePlayers: [] as Player[],
@@ -108,8 +111,42 @@ const match = ref({
     awayTeam: null as Team | null,
   } as Match);
 
-const selectedPlayers = ref([]);
+const selectedPlayers = ref([] as Player[]);
 const teamMode = ref('elo-based'); // 'elo-based', 'random', or 'fixed'
+const showAllPlayers = ref(false);
+
+const gameMatches = computed(() => {
+  if (!match.value.game) {
+    return [];
+  }
+  return (matchStore.matches ?? []).filter(m => m.game?.id === match.value.game?.id);
+});
+
+const averagePlayedGamesByPlayerOrTeam = computed(() => {
+  return Math.floor(gameMatches.value.length * 0.122);
+});
+
+const getPlayerGameMatchCount = (player: Player) => {
+  return gameMatches.value.filter(m =>
+    m.homePlayers.some(p => p.id === player.id) ||
+    m.awayPlayers.some(p => p.id === player.id)
+  ).length;
+};
+
+const players = computed(() => {
+  const allPlayers = _.sortBy(playerStore.players, player => player.username.toLowerCase());
+
+  if (showAllPlayers.value) {
+    return allPlayers;
+  }
+
+  const threshold = averagePlayedGamesByPlayerOrTeam.value;
+  const selectedIds = new Set(selectedPlayers.value.map(p => p.id));
+
+  return allPlayers.filter(player =>
+    getPlayerGameMatchCount(player) > threshold || selectedIds.has(player.id)
+  );
+});
 
 const clear = () => {
   match.value = {
@@ -268,6 +305,10 @@ const snakeDraftTeams = (playersWithElo: { player: Player, elo: number }[]): { h
   return { home: _.shuffle(betterPlayers), away: _.shuffle(worsePlayers) };
 };
 
+watch(() => match.value.game, () => {
+  showAllPlayers.value = false;
+});
+
 watch(selectedPlayers, (newVal: Player[]) => {
   if (teamMode.value === 'fixed') {
     // Fixed teams: alternate adding players to each team
@@ -344,7 +385,7 @@ const awayTeamAvgElo = computed(() => {
 
 <style scoped>
 
-:deep(.p-highlight) {
+:deep(.p-selectbutton .p-highlight) {
   background-color: white;
   color: #1c1c1c;
 }
