@@ -51,6 +51,7 @@
           <template #players>
             {{ match.homePlayers.map(p => p.username).join(', ') }}
             <div v-if="homeTeamAvgElo !== null" class="mt-2">avg elo: {{ homeTeamAvgElo }}</div>
+            <div v-if="goalPrediction" class="mt-2 text-sm">xG: {{ goalPrediction.homeExpectedGoals }}</div>
           </template>
         </TeamScore>
         <TeamScore v-model="match.awayScore" class="w-6">
@@ -59,8 +60,27 @@
           <template #players>
             {{ match.awayPlayers.map(p => p.username).join(', ') }}
             <div v-if="awayTeamAvgElo !== null" class="mt-2">avg elo: {{ awayTeamAvgElo }}</div>
+            <div v-if="goalPrediction" class="mt-2 text-sm">xG: {{ goalPrediction.awayExpectedGoals }}</div>
           </template>
         </TeamScore>
+      </div>
+
+      <div v-if="goalPrediction" class="mt-4 mx-auto prediction-panel">
+        <h4>prediction</h4>
+        <div class="text-sm mb-2">
+          win: home {{ goalPrediction.homeWinProbability }}% · draw {{ goalPrediction.drawProbability }}% · away {{ goalPrediction.awayWinProbability }}%
+        </div>
+        <div class="text-sm mb-2">
+          likely scores:
+          <span v-for="(scoreline, index) in goalPrediction.mostLikelyScorelines" :key="`${scoreline.home}-${scoreline.away}`">
+            {{ scoreline.home }}:{{ scoreline.away }} ({{ scoreline.probability }}%)<span v-if="index < goalPrediction.mostLikelyScorelines.length - 1"> · </span>
+          </span>
+        </div>
+        <div class="text-xs opacity-70">
+          based on {{ goalPrediction.basedOnMatches }} matches
+          <span v-if="goalPrediction.headToHeadMatches > 0"> · {{ goalPrediction.headToHeadMatches }} head-to-head</span>
+          · confidence: {{ goalPrediction.confidence }}
+        </div>
       </div>
 
       <div class="mt-5">
@@ -81,6 +101,7 @@ import { useMatchStore, type Match } from '@/stores/match';
 import { useLoadingStore } from '@/stores/loading';
 import { usePlayersStore, type Player } from '@/stores/player';
 import { calculateEloRatings, BASE_ELO } from '@/utils/elo';
+import { predictMatchGoals } from '@/utils/goalPrediction';
 import Button from 'primevue/button';
 import InputSwitch from 'primevue/inputswitch';
 import { ref, computed, watch } from 'vue';
@@ -381,6 +402,22 @@ const awayTeamAvgElo = computed(() => {
   return Math.round(_.mean(awayElos));
 });
 
+const goalPrediction = computed(() => {
+  if (
+    !match.value.game ||
+    match.value.homePlayers.length === 0 ||
+    match.value.awayPlayers.length === 0
+  ) {
+    return null;
+  }
+
+  return predictMatchGoals(
+    gameMatches.value,
+    match.value.homePlayers,
+    match.value.awayPlayers
+  );
+});
+
 </script>
 
 <style scoped>
@@ -395,6 +432,14 @@ const awayTeamAvgElo = computed(() => {
   margin: 0.25rem;
   text-align: center;
   display: inline-block;
+}
+
+.prediction-panel {
+  max-width: 640px;
+  padding: 1rem;
+  border: 1px solid var(--surface-border, #dee2e6);
+  border-radius: 6px;
+  background: var(--surface-ground, #f8f9fa);
 }
 
 </style>
