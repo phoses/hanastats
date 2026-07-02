@@ -18,7 +18,13 @@ export interface GoalPrediction {
 }
 
 const PRIOR_WEIGHT = 3;
-const MAX_SCORELINE_GOALS = 8;
+
+// Minimum size of the scoreline grid. The actual cap is derived from the
+// highest score observed in the game's history (plus a margin) so the model
+// adapts to both low-scoring games (e.g. football) and high-scoring, race-to-N
+// games (e.g. table tennis to 11).
+const MIN_SCORELINE_CAP = 8;
+const SCORELINE_CAP_MARGIN = 2;
 
 // Weights for blending the player-rate model with the ELO anchor (must sum to 1).
 const PLAYER_RATE_WEIGHT = 0.65;
@@ -133,13 +139,14 @@ const dixonColesTau = (
  */
 const buildScoreGrid = (
   homeLambda: number,
-  awayLambda: number
+  awayLambda: number,
+  scoreCap: number
 ): { home: number; away: number; probability: number }[] => {
   const grid: { home: number; away: number; probability: number }[] = [];
   let total = 0;
 
-  for (let home = 0; home <= MAX_SCORELINE_GOALS; home++) {
-    for (let away = 0; away <= MAX_SCORELINE_GOALS; away++) {
+  for (let home = 0; home <= scoreCap; home++) {
+    for (let away = 0; away <= scoreCap; away++) {
       const probability =
         poissonProbability(home, homeLambda) *
         poissonProbability(away, awayLambda) *
@@ -202,6 +209,9 @@ export const predictMatchGoals = (
   const leagueAvgGoalsFor = _.meanBy(matches, m => m.homeScore);
   const leagueAvgGoalsAgainst = _.meanBy(matches, m => m.awayScore);
   const leagueAvgPerTeam = (leagueAvgGoalsFor + leagueAvgGoalsAgainst) / 2;
+
+  const maxObservedScore = _.max(matches.flatMap(m => [m.homeScore, m.awayScore])) ?? MIN_SCORELINE_CAP;
+  const scoreCap = Math.max(MIN_SCORELINE_CAP, maxObservedScore + SCORELINE_CAP_MARGIN);
 
   const allPlayers = _.uniqBy([...homePlayers, ...awayPlayers], 'id');
   const playerStats = Object.fromEntries(
@@ -267,7 +277,7 @@ export const predictMatchGoals = (
   const homeExpectedGoals = roundGoals(homeLambda);
   const awayExpectedGoals = roundGoals(awayLambda);
 
-  const scoreGrid = buildScoreGrid(homeLambda, awayLambda);
+  const scoreGrid = buildScoreGrid(homeLambda, awayLambda, scoreCap);
   const outcomes = calculateOutcomeProbabilities(scoreGrid);
   const mostLikelyScorelines = _.orderBy(scoreGrid, ['probability'], ['desc']).slice(0, 5);
 
