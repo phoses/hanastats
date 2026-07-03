@@ -1,5 +1,6 @@
 <template>
-  <div>
+  <div class="config-view">
+    <button class="config-back font-heading" @click="router.push('/')">← Back</button>
     <h2>players</h2>
   </div>
   <ul>
@@ -93,6 +94,7 @@ import { useUserStore } from '@/stores/user';
 import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import InputNumber from 'primevue/inputnumber';
 import _ from 'lodash';
 
@@ -101,6 +103,7 @@ const playerStore = usePlayersStore();
 const matchStore = useMatchStore();
 const userStore = useUserStore();
 const loadingStore = useLoadingStore();
+const router = useRouter();
 
 const games = computed(() => _.sortBy(gameStore.games, game => game.disabled ? 1 : 0));
 const players = computed(() => playerStore.players);
@@ -169,8 +172,24 @@ async function deleteTeam(game: Game, team: Team) {
 </script>
 
 <style scoped>
+.config-view {
+  padding: 0 18px 24px;
+  color: var(--hs-text);
+}
 
-  .name {
-    width: 7rem;
-  }
+.config-back {
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--hs-text);
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 11px;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.name {
+  width: 7rem;
+}
 </style>
