@@ -164,6 +164,7 @@
             :score="add.homeScore"
             @inc="incScore('homeScore')"
             @dec="decScore('homeScore')"
+            @set="setScore('homeScore', $event)"
           />
           <ScorePanel
             side="away"
@@ -171,6 +172,7 @@
             :score="add.awayScore"
             @inc="incScore('awayScore')"
             @dec="decScore('awayScore')"
+            @set="setScore('awayScore', $event)"
           />
         </div>
         <div class="result-line" :style="{ color: resultColor }">{{ resultLabel }}</div>
@@ -496,11 +498,15 @@ function randomizeTeams() {
 }
 
 function incScore(field: 'homeScore' | 'awayScore') {
-  add.value[field] = Math.min(20, add.value[field] + 1);
+  add.value[field] = Math.min(99, add.value[field] + 1);
 }
 
 function decScore(field: 'homeScore' | 'awayScore') {
   add.value[field] = Math.max(0, add.value[field] - 1);
+}
+
+function setScore(field: 'homeScore' | 'awayScore', value: number) {
+  add.value[field] = Math.min(99, Math.max(0, value));
 }
 
 function toggleOvertime() {

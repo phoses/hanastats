@@ -2,7 +2,16 @@
   <div class="score-panel" :class="`score-panel--${side}`">
     <div class="score-panel__label font-heading">{{ side === 'home' ? 'HOME' : 'AWAY' }}</div>
     <div class="score-panel__names">{{ names }}</div>
-    <div class="score-panel__score font-display">{{ score }}</div>
+    <input
+      class="score-panel__score font-display"
+      type="number"
+      inputmode="numeric"
+      min="0"
+      max="99"
+      :value="score"
+      @focus="($event.target as HTMLInputElement).select()"
+      @input="onInput"
+    />
     <div class="score-panel__steppers">
       <button class="score-panel__step score-panel__step--minus" @click="$emit('dec')">−</button>
       <button
@@ -23,7 +32,13 @@ defineProps<{
   score: number;
 }>();
 
-defineEmits<{ inc: []; dec: [] }>();
+const emit = defineEmits<{ inc: []; dec: []; set: [value: number] }>();
+
+function onInput(event: Event) {
+  const raw = (event.target as HTMLInputElement).value;
+  const parsed = Number.parseInt(raw, 10);
+  emit('set', Number.isNaN(parsed) ? 0 : parsed);
+}
 </script>
 
 <style scoped>
@@ -72,6 +87,33 @@ defineEmits<{ inc: []; dec: [] }>();
   font-size: 52px;
   color: var(--hs-text);
   line-height: 1;
+  width: 100%;
+  text-align: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.score-panel__score:focus {
+  color: var(--hs-text);
+}
+
+.score-panel--home .score-panel__score:focus {
+  border-bottom: 2px solid var(--hs-lime);
+}
+
+.score-panel--away .score-panel__score:focus {
+  border-bottom: 2px solid var(--hs-blue);
+}
+
+.score-panel__score::-webkit-outer-spin-button,
+.score-panel__score::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .score-panel__steppers {
