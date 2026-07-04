@@ -1,5 +1,13 @@
 <template>
-  <div class="app-shell">
+  <div v-if="uiStore.design === 'old'" class="flex justify-content-center flex-wrap">
+    <div class="flex flex-column w-full sm:w-30rem">
+      <Menubar :model="oldMenuItems" breakpoint="50" />
+      <ProgressBar v-if="isLoading" mode="indeterminate" />
+      <RouterView />
+    </div>
+  </div>
+
+  <div v-else class="app-shell">
     <div v-if="isLoading" class="app-loading">
       <div class="app-loading__bar" />
     </div>
@@ -50,13 +58,24 @@
       >
         Sign in
       </button>
+
+      <button
+        v-if="!isConfigRoute && !isAddMatchRoute"
+        class="design-toggle font-heading"
+        @click="uiStore.setDesign('old')"
+      >
+        old ui
+      </button>
     </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, watchEffect } from 'vue';
 import { RouterView, useRouter, useRoute } from 'vue-router';
+import { PrimeIcons } from 'primevue/api';
+import Menubar from 'primevue/menubar';
+import ProgressBar from 'primevue/progressbar';
 import { useLoadingStore } from './stores/loading';
 import { useUserStore } from './stores/user';
 import { useGamesStore } from './stores/game';
@@ -77,6 +96,10 @@ const uiStore = useUiStore();
 
 const initializing = ref(true);
 const isLoading = computed(() => loadingStore.isLoading());
+
+watchEffect(() => {
+  document.documentElement.classList.toggle('hs-design-old', uiStore.design === 'old');
+});
 const isConfigRoute = computed(() => route.path === '/config');
 const isAddMatchRoute = computed(() => route.path === '/addmatch');
 
@@ -107,9 +130,55 @@ async function login() {
     await userStore.login();
   });
 }
+
+async function logout() {
+  loadingStore.doLoading(async () => {
+    await userStore.logout();
+  });
+}
+
+const oldMenuItems = computed(() => {
+  const items: any[] = [
+    { label: 'stats', icon: PrimeIcons.CHART_BAR, command: () => router.push('/') },
+  ];
+
+  if (userStore.isAdmin) {
+    items.push({ label: 'addmatch', icon: PrimeIcons.PLUS_CIRCLE, command: () => router.push('/addmatch') });
+  }
+
+  items.push({ label: 'new ui', icon: PrimeIcons.PALETTE, command: () => uiStore.setDesign('new') });
+
+  if (!initializing.value) {
+    if (userStore.isLogged) {
+      items.push({
+        icon: PrimeIcons.COG,
+        items: [
+          { label: 'config', icon: PrimeIcons.DATABASE, command: () => router.push('/config') },
+          { label: 'logout', icon: PrimeIcons.SIGN_OUT, command: () => logout() },
+        ],
+      });
+    } else {
+      items.push({ icon: PrimeIcons.SIGN_IN, command: () => login() });
+    }
+  }
+
+  return items;
+});
 </script>
 
 <style scoped>
+:deep(.p-menubar) {
+  padding: 0;
+}
+
+:deep(.p-menubar .p-menubar-root-list) {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  gap: 1rem;
+  flex-wrap: nowrap;
+}
+
 .app-shell {
   position: relative;
   margin: 0 auto;
@@ -185,6 +254,21 @@ async function login() {
   border-radius: 11px;
   background: rgba(255, 255, 255, 0.06);
   color: var(--hs-text);
+  cursor: pointer;
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.design-toggle {
+  position: fixed;
+  top: 12px;
+  left: max(12px, calc(50% - 195px + 12px));
+  z-index: 45;
+  border: none;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--hs-text-muted);
   cursor: pointer;
   padding: 8px 14px;
   font-weight: 700;

@@ -6,12 +6,12 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../views/Home.vue'),
+      component: () => import('../views/HomeSwitch.vue'),
     },
     {
       path: '/addmatch',
       name: 'addmatch',
-      component: () => import('../views/AddMatchView.vue'),
+      component: () => import('../views/AddMatchSwitch.vue'),
     },
     {
       path: '/config',

@@ -5,6 +5,18 @@ import type { Player } from './player';
 
 export type AppTab = 'standings' | 'trends' | 'matches' | 'stats';
 
+export type AppDesign = 'new' | 'old';
+
+const DESIGN_STORAGE_KEY = 'hs-design';
+
+function loadDesign(): AppDesign {
+  try {
+    return localStorage.getItem(DESIGN_STORAGE_KEY) === 'old' ? 'old' : 'new';
+  } catch {
+    return 'new';
+  }
+}
+
 export interface AddMatchState {
   open: boolean;
   step: 1 | 2 | 3 | 4;
@@ -31,6 +43,7 @@ function defaultAddState(): AddMatchState {
 
 export const useUiStore = defineStore('ui', () => {
   const tab = ref<AppTab>('standings');
+  const design = ref<AppDesign>(loadDesign());
   const expandedPlayerId = ref<string | null>(null);
   const gameFilterId = ref<string | 'all'>('all');
   const playerCountFilter = ref<number[]>([]);
@@ -48,6 +61,19 @@ export const useUiStore = defineStore('ui', () => {
 
   function setTab(next: AppTab) {
     tab.value = next;
+  }
+
+  function setDesign(next: AppDesign) {
+    design.value = next;
+    try {
+      localStorage.setItem(DESIGN_STORAGE_KEY, next);
+    } catch {
+      // ignore storage errors (e.g. private mode)
+    }
+  }
+
+  function toggleDesign() {
+    setDesign(design.value === 'new' ? 'old' : 'new');
   }
 
   function toggleExpanded(playerId: string) {
@@ -136,6 +162,7 @@ export const useUiStore = defineStore('ui', () => {
 
   return {
     tab,
+    design,
     expandedPlayerId,
     gameFilterId,
     playerCountFilter,
@@ -148,6 +175,8 @@ export const useUiStore = defineStore('ui', () => {
     newlyAddedMatchId,
     add,
     setTab,
+    setDesign,
+    toggleDesign,
     toggleExpanded,
     setGameFilter,
     togglePlayerCountFilter,

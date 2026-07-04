@@ -1,6 +1,12 @@
 <template>
   <div class="config-view">
     <button class="config-back font-heading" @click="router.push('/')">← Back</button>
+
+    <template v-if="userStore.isLogged">
+      <h2>account</h2>
+      <Button label="logout" class="p-button-danger" @click="logout" />
+    </template>
+
     <h2>players</h2>
   </div>
   <ul>
@@ -117,6 +123,13 @@ const matchesVersion = ref(0);
 onMounted(async () => {
   matchesVersion.value = await matchStore.getMatchesVersion();
 });
+
+async function logout() {
+  loadingStore.doLoading(async () => {
+    await userStore.logout();
+    router.push('/');
+  });
+}
 
 async function invalidateMatchesCache() {
   loadingStore.doLoading(async () => {
