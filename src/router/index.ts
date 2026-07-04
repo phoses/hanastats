@@ -9,13 +9,14 @@ const router = createRouter({
       component: () => import('../views/Home.vue'),
     },
     {
+      path: '/addmatch',
+      name: 'addmatch',
+      component: () => import('../views/AddMatchView.vue'),
+    },
+    {
       path: '/config',
       name: 'config',
       component: () => import('../views/Config.vue'),
-    },
-    {
-      path: '/addmatch',
-      redirect: '/',
     },
     {
       path: '/:pathMatch(.*)*',

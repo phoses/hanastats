@@ -2,9 +2,10 @@ import { computed } from 'vue';
 import _ from 'lodash';
 import moment from 'moment';
 import { calculateEloRatings, BASE_ELO } from '@/utils/elo';
-import { getInitials, getPlayerColor } from '@/utils/playerUi';
+import { getInitials, getPlayerColor, getShortName } from '@/utils/playerUi';
 import { useFilteredMatches } from './useFilteredMatches';
 import { usePlayerStandings } from './usePlayerStandings';
+import type { Match } from '@/stores/match';
 
 export interface HighlightCard {
   tag: string;
@@ -23,9 +24,17 @@ function teamKey(players: { id: string }[]): string {
     .join(',');
 }
 
+function findPlayerInMatches(matches: Match[], id: string) {
+  for (const match of matches) {
+    const player = [...match.homePlayers, ...match.awayPlayers].find((p) => p.id === id);
+    if (player) return player;
+  }
+  return null;
+}
+
 export function useHighlights() {
   const { filteredMatches } = useFilteredMatches();
-  const { standings, playerIds } = usePlayerStandings();
+  const { validStandings, validPlayerIds, playerIds } = usePlayerStandings();
 
   const biggestMovers = computed(() => {
     const weekAgo = moment().subtract(7, 'days').valueOf();
@@ -42,6 +51,7 @@ export function useHighlights() {
     const { eloRatings: currentElos } = calculateEloRatings(allMatches, players);
     const beforeRecent = allMatches.filter((m) => (m.played ?? 0) < weekAgo);
     const { eloRatings: beforeElos } = calculateEloRatings(beforeRecent, players);
+    const validIds = validPlayerIds.value;
 
     return _.chain(players)
       .map(([p]) => {
@@ -55,7 +65,7 @@ export function useHighlights() {
           deltaLabel: `${delta >= 0 ? '+' : ''}${delta}`,
         };
       })
-      .filter((m) => m.delta !== 0)
+      .filter((m) => m.delta !== 0 && validIds.has(m.id))
       .orderBy([(m) => Math.abs(m.delta)], ['desc'])
       .take(4)
       .value();
@@ -63,7 +73,8 @@ export function useHighlights() {
 
   const statCards = computed((): HighlightCard[] => {
     const matches = filteredMatches.value;
-    const ranked = standings.value;
+    const ranked = validStandings.value;
+    const validIds = validPlayerIds.value;
 
     const hottest = _.maxBy(ranked, (p) =>
       p.streakType === 'W' ? p.streakCount : 0
@@ -78,10 +89,16 @@ export function useHighlights() {
         activityCounts[p.id] = (activityCounts[p.id] ?? 0) + 1;
       });
     });
-    const mostActiveId = _.maxBy(Object.keys(activityCounts), (id) => activityCounts[id]);
-    const mostActive = ranked.find((p) => p.id === mostActiveId);
+    const eligibleActiveIds = Object.keys(activityCounts).filter((id) => validIds.has(id));
+    const mostActiveId = _.maxBy(eligibleActiveIds, (id) => activityCounts[id]);
+    const mostActivePlayer = mostActiveId
+      ? findPlayerInMatches(monthMatches, mostActiveId)
+      : null;
 
-    const duoStats: Record<string, { wins: number; losses: number; names: string }> = {};
+    const duoStats: Record<
+      string,
+      { wins: number; losses: number; draws: number; names: string }
+    > = {};
     matches.forEach((m) => {
       const homeKey = teamKey(m.homePlayers);
       const awayKey = teamKey(m.awayPlayers);
@@ -90,22 +107,26 @@ export function useHighlights() {
           duoStats[homeKey] = {
             wins: 0,
             losses: 0,
+            draws: 0,
             names: m.homePlayers.map((p) => p.username.split(' ')[0]).join(' + '),
           };
         }
         if (m.homeScore > m.awayScore) duoStats[homeKey].wins++;
         else if (m.homeScore < m.awayScore) duoStats[homeKey].losses++;
+        else duoStats[homeKey].draws++;
       }
       if (m.awayPlayers.length === 2) {
         if (!duoStats[awayKey]) {
           duoStats[awayKey] = {
             wins: 0,
             losses: 0,
+            draws: 0,
             names: m.awayPlayers.map((p) => p.username.split(' ')[0]).join(' + '),
           };
         }
         if (m.awayScore > m.homeScore) duoStats[awayKey].wins++;
         else if (m.awayScore < m.homeScore) duoStats[awayKey].losses++;
+        else duoStats[awayKey].draws++;
       }
     });
     const bestDuo = _.maxBy(Object.values(duoStats), (d) => d.wins - d.losses);
@@ -123,10 +144,10 @@ export function useHighlights() {
     let rivalryLabel = '—';
     if (topRivalryKey) {
       const [id1, id2] = topRivalryKey.split(':');
-      const p1 = ranked.find((p) => p.id === id1);
-      const p2 = ranked.find((p) => p.id === id2);
+      const p1 = findPlayerInMatches(matches, id1);
+      const p2 = findPlayerInMatches(matches, id2);
       if (p1 && p2) {
-        rivalryLabel = `${p1.shortName} vs ${p2.shortName}`;
+        rivalryLabel = `${getShortName(p1.username)} vs ${getShortName(p2.username)}`;
       }
     }
 
@@ -135,7 +156,7 @@ export function useHighlights() {
     if (hotStreak) {
       cards.push({
         tag: '🔥 HOTTEST STREAK',
-        tagColor: '#FF5B39',
+        tagColor: 'var(--hs-red)',
         value: `${hotStreak.shortName} · W${hotStreak.streakCount}`,
         valueSize: '26px',
         sub: `${hotStreak.streakCount} straight wins`,
@@ -146,20 +167,24 @@ export function useHighlights() {
 
     cards.push({
       tag: 'MOST ACTIVE',
-      tagColor: '#38A6FF',
-      value: mostActive?.shortName ?? '—',
+      tagColor: 'var(--hs-blue)',
+      value: mostActivePlayer ? getShortName(mostActivePlayer.username) : '—',
       valueSize: '24px',
-      sub: mostActive
-        ? `${activityCounts[mostActive.id] ?? 0} matches this month`
+      sub: mostActiveId
+        ? `${activityCounts[mostActiveId] ?? 0} matches this month`
         : 'No matches yet',
       spanFull: false,
     });
 
     if (bestDuo) {
+      const record =
+        bestDuo.draws > 0
+          ? `${bestDuo.wins}–${bestDuo.losses}–${bestDuo.draws}`
+          : `${bestDuo.wins}–${bestDuo.losses}`;
       cards.push({
         tag: 'BEST DUO',
-        tagColor: '#C6FF3D',
-        value: `${bestDuo.wins}–${bestDuo.losses}`,
+        tagColor: 'var(--hs-lime)',
+        value: record,
         valueSize: '26px',
         sub: bestDuo.names,
         spanFull: false,
@@ -168,7 +193,7 @@ export function useHighlights() {
 
     cards.push({
       tag: 'TOP RIVALRY',
-      tagColor: '#B98CFF',
+      tagColor: 'var(--hs-accent)',
       value: topRivalryKey ? String(rivalryCounts[topRivalryKey]) : '0',
       valueSize: '26px',
       sub: topRivalryKey ? `${rivalryLabel} games` : 'No rivalries yet',

@@ -5,23 +5,22 @@
     </div>
 
     <template v-if="!initializing">
-      <main class="app-scroll hs-scroll" :class="{ 'app-scroll--config': isConfigRoute }">
+      <main class="app-scroll hs-scroll" :class="{ 'app-scroll--config': isConfigRoute || isAddMatchRoute }">
         <RouterView />
       </main>
 
-      <template v-if="!isConfigRoute">
+      <template v-if="!isConfigRoute && !isAddMatchRoute">
         <BottomNav
           :tab="uiStore.tab"
           :show-fab="userStore.isAdmin"
           @navigate="uiStore.setTab"
-          @add="uiStore.openAddMatch"
+          @add="router.push('/addmatch')"
         />
         <AppToast :message="uiStore.toast" />
-        <LogMatchSheet v-if="userStore.isAdmin" />
       </template>
 
       <button
-        v-if="userStore.isLogged && !isConfigRoute"
+        v-if="userStore.isLogged && !isConfigRoute && !isAddMatchRoute"
         class="settings-btn"
         aria-label="Settings"
         @click="router.push('/config')"
@@ -66,7 +65,6 @@ import { useMatchStore } from './stores/match';
 import { useUiStore } from './stores/ui';
 import BottomNav from './components/ui/BottomNav.vue';
 import AppToast from './components/ui/AppToast.vue';
-import LogMatchSheet from './components/LogMatchSheet.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -80,6 +78,7 @@ const uiStore = useUiStore();
 const initializing = ref(true);
 const isLoading = computed(() => loadingStore.isLoading());
 const isConfigRoute = computed(() => route.path === '/config');
+const isAddMatchRoute = computed(() => route.path === '/addmatch');
 
 onMounted(async () => {
   loadingStore.doLoading(async () => {

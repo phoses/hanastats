@@ -1,6 +1,6 @@
 <template>
   <section class="trends-view hs-animate-fade">
-    <ScreenHeader subtitle="ELO over last 10 matches" accent-color="#38A6FF">
+    <ScreenHeader subtitle="ELO over last 10 matches" accent-color="var(--hs-accent)">
       <template #title-before>TR</template>
       <template #title-accent>ENDS</template>
     </ScreenHeader>
@@ -35,7 +35,7 @@
         <div class="mover-row__name font-heading">{{ mover.name }}</div>
         <div
           class="mover-row__delta font-display"
-          :style="{ color: mover.delta >= 0 ? '#C6FF3D' : '#FF5B39' }"
+          :style="{ color: mover.delta >= 0 ? 'var(--hs-lime)' : 'var(--hs-red)' }"
         >
           {{ mover.deltaLabel }}
         </div>
@@ -55,13 +55,13 @@ import { usePlayerStandings } from '@/composables/usePlayerStandings';
 import { useHighlights } from '@/composables/useHighlights';
 
 const uiStore = useUiStore();
-const { standings } = usePlayerStandings();
+const { standings, validStandings } = usePlayerStandings();
 const { biggestMovers } = useHighlights();
 
-const legendPlayers = computed(() => standings.value.slice(0, 6));
+const legendPlayers = computed(() => validStandings.value.slice(0, 6));
 
 watch(
-  () => standings.value.map((p) => p.id),
+  () => validStandings.value.map((p) => p.id),
   (ids) => uiStore.initChartSelection(ids),
   { immediate: true }
 );
@@ -79,7 +79,7 @@ const chartLines = computed(() =>
 
 <style scoped>
 .trends-view {
-  padding: 14px 18px 0;
+  padding: 0;
 }
 
 .chart-card {

@@ -1,7 +1,10 @@
 <template>
   <div
     class="player-card"
-    :class="{ 'player-card--highlight': highlighted }"
+    :class="{
+      'player-card--highlight': highlighted,
+      'player-card--invalid': !player.validResult,
+    }"
     :style="{ animation: animate ? 'hsFadeIn .35s ease' : 'none' }"
   >
     <button class="player-card__row" @click="$emit('toggle')">
@@ -22,7 +25,7 @@
       </div>
       <div class="player-card__elo-block">
         <div class="player-card__elo font-display">{{ player.elo }}</div>
-        <div class="player-card__trend" :style="{ color: player.trendUp ? '#C6FF3D' : '#FF8FB0' }">
+        <div class="player-card__trend" :style="{ color: player.trendUp ? 'var(--hs-lime)' : 'var(--hs-cooling)' }">
           {{ player.trendUp ? '▲ rising' : '▼ cooling' }}
         </div>
       </div>
@@ -43,7 +46,7 @@
       <div class="player-card__divider" />
       <div class="player-card__stats">
         <div class="player-card__stat">
-          <div class="player-card__stat-value font-display" style="color: #c6ff3d">
+          <div class="player-card__stat-value font-display player-card__stat-value--accent">
             {{ player.winPct }}%
           </div>
           <div class="player-card__stat-label">WIN RATE</div>
@@ -65,7 +68,13 @@
               v-for="(r, i) in player.form"
               :key="i"
               class="player-card__form-chip font-heading"
-              :class="r === 'W' ? 'player-card__form-chip--win' : 'player-card__form-chip--loss'"
+              :class="
+                r === 'W'
+                  ? 'player-card__form-chip--win'
+                  : r === 'D'
+                    ? 'player-card__form-chip--draw'
+                    : 'player-card__form-chip--loss'
+              "
             >
               {{ r }}
             </span>
@@ -97,7 +106,7 @@ const props = defineProps<{
 defineEmits<{ toggle: [] }>();
 
 const rankColor = computed(() =>
-  props.rank <= 3 ? MEDAL_COLORS[props.rank - 1] : '#4A5563'
+  props.rank <= 3 ? MEDAL_COLORS[props.rank - 1] : 'var(--hs-text-faint)'
 );
 
 const streakLabel = computed(() => `${props.player.streakType}${props.player.streakCount}`);
@@ -105,9 +114,9 @@ const streakLabel = computed(() => `${props.player.streakType}${props.player.str
 const streakStyle = computed(() => {
   const hot = props.player.streakType === 'W' && props.player.streakCount >= 3;
   const cold = props.player.streakType === 'L' && props.player.streakCount >= 2;
-  if (hot) return { background: 'rgba(255,91,57,.16)', color: '#FF5B39' };
-  if (cold) return { background: 'rgba(56,166,255,.16)', color: '#38A6FF' };
-  return { background: 'rgba(255,255,255,.06)', color: '#8A94A0' };
+  if (hot) return { background: 'rgba(255, 85, 85, 0.16)', color: 'var(--hs-red)' };
+  if (cold) return { background: 'rgba(139, 233, 253, 0.16)', color: 'var(--hs-blue)' };
+  return { background: 'rgba(255,255,255,.06)', color: 'var(--hs-text-muted)' };
 });
 </script>
 
@@ -121,8 +130,18 @@ const streakStyle = computed(() => {
 }
 
 .player-card--highlight {
-  background: rgba(198, 255, 61, 0.08);
-  border-color: rgba(198, 255, 61, 0.4);
+  background: var(--hs-accent-soft);
+  border-color: rgba(189, 147, 249, 0.4);
+}
+
+.player-card--invalid {
+  opacity: 0.55;
+}
+
+.player-card--invalid .player-card__name,
+.player-card--invalid .player-card__elo,
+.player-card--invalid .player-card__record {
+  color: rgba(255, 170, 170, 0.85);
 }
 
 .player-card__row {
@@ -268,13 +287,22 @@ const streakStyle = computed(() => {
 }
 
 .player-card__form-chip--win {
-  background: rgba(198, 255, 61, 0.16);
+  background: var(--hs-win-soft);
   color: var(--hs-lime);
 }
 
 .player-card__form-chip--loss {
-  background: rgba(255, 91, 57, 0.16);
+  background: var(--hs-loss-soft);
   color: var(--hs-red);
+}
+
+.player-card__form-chip--draw {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--hs-text-muted);
+}
+
+.player-card__stat-value--accent {
+  color: var(--hs-lime);
 }
 
 .player-card__rival {

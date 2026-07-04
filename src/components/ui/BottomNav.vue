@@ -3,7 +3,6 @@
     <button
       class="bottom-nav__item"
       :class="{ 'bottom-nav__item--active': tab === 'standings' }"
-      :style="{ color: tab === 'standings' ? '#C6FF3D' : '#4A5563' }"
       @click="$emit('navigate', 'standings')"
     >
       <svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -16,8 +15,36 @@
 
     <button
       class="bottom-nav__item"
+      :class="{ 'bottom-nav__item--active': tab === 'matches' }"
+      @click="$emit('navigate', 'matches')"
+    >
+      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M4 7h5l3 10 3-10h5"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <span>Matches</span>
+    </button>
+
+    <button
+      v-if="showFab"
+      class="bottom-nav__fab hs-animate-pulse"
+      aria-label="Log a match"
+      @click="$emit('add')"
+    >
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 5V19M5 12H19" stroke="#282a36" stroke-width="3" stroke-linecap="round" />
+      </svg>
+    </button>
+    <div v-else class="bottom-nav__fab-spacer" />
+
+    <button
+      class="bottom-nav__item"
       :class="{ 'bottom-nav__item--active': tab === 'trends' }"
-      :style="{ color: tab === 'trends' ? '#38A6FF' : '#4A5563' }"
       @click="$emit('navigate', 'trends')"
     >
       <svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -34,39 +61,8 @@
     </button>
 
     <button
-      v-if="showFab"
-      class="bottom-nav__fab hs-animate-pulse"
-      aria-label="Log a match"
-      @click="$emit('add')"
-    >
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 5V19M5 12H19" stroke="#0A0E13" stroke-width="3" stroke-linecap="round" />
-      </svg>
-    </button>
-    <div v-else class="bottom-nav__fab-spacer" />
-
-    <button
-      class="bottom-nav__item"
-      :class="{ 'bottom-nav__item--active': tab === 'matches' }"
-      :style="{ color: tab === 'matches' ? '#FF5B39' : '#4A5563' }"
-      @click="$emit('navigate', 'matches')"
-    >
-      <svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M4 7h5l3 10 3-10h5"
-          stroke="currentColor"
-          stroke-width="2.2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-      </svg>
-      <span>Matches</span>
-    </button>
-
-    <button
       class="bottom-nav__item"
       :class="{ 'bottom-nav__item--active': tab === 'stats' }"
-      :style="{ color: tab === 'stats' ? '#B98CFF' : '#4A5563' }"
       @click="$emit('navigate', 'stats')"
     >
       <svg width="23" height="23" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -104,7 +100,7 @@ defineEmits<{
   max-width: 390px;
   height: var(--hs-nav-height);
   z-index: 50;
-  background: linear-gradient(to top, var(--hs-bg) 62%, rgba(10, 14, 19, 0));
+  background: linear-gradient(to top, var(--hs-bg) 62%, rgba(40, 42, 54, 0));
   display: flex;
   align-items: flex-start;
   justify-content: space-around;
@@ -121,6 +117,11 @@ defineEmits<{
   gap: 5px;
   width: 48px;
   padding: 0;
+  color: var(--hs-text-faint);
+}
+
+.bottom-nav__item--active {
+  color: var(--hs-accent);
 }
 
 .bottom-nav__item span {
@@ -135,11 +136,11 @@ defineEmits<{
   width: 56px;
   height: 56px;
   border-radius: 19px;
-  background: var(--hs-lime);
+  background: var(--hs-accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 22px -4px rgba(198, 255, 61, 0.6);
+  box-shadow: 0 8px 22px -4px rgba(189, 147, 249, 0.6);
 }
 
 .bottom-nav__fab-spacer {

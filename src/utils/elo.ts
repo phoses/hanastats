@@ -201,72 +201,81 @@ export const calculateEloHistory = (
   matches: Match[],
   players: Player[][]
 ): EloHistoryResult => {
-  // Track ELO progression for each player
   const playerEloHistory: { [key: string]: EloHistoryPoint[] } = {};
   const eloRatings: { [key: string]: number } = {};
-  
-  // Process matches chronologically
+
   const sortedMatches = _.sortBy(matches, 'played');
-  
-  // Get the first match date for initialization
-  const firstMatchDate = sortedMatches.length > 0 && sortedMatches[0].played
-    ? (typeof sortedMatches[0].played === 'number' ? sortedMatches[0].played : new Date(sortedMatches[0].played).getTime())
-    : Date.now();
-  
-  // Initialize all players with first match date
-  players.forEach(playerArray => {
-    const playerId = playerArray[0].id;
-    const playerName = playerArray[0].username;
-    eloRatings[playerId] = BASE_ELO;
-    playerEloHistory[playerName] = [{ date: firstMatchDate, elo: BASE_ELO }];
-  });
-  
-  sortedMatches.forEach(match => {
+
+  sortedMatches.forEach((match) => {
     if (!match.played) return;
-    
-    // Calculate average ELO for each team
+
+    match.homePlayers.forEach((player) => {
+      if (eloRatings[player.id] === undefined) {
+        eloRatings[player.id] = BASE_ELO;
+      }
+    });
+    match.awayPlayers.forEach((player) => {
+      if (eloRatings[player.id] === undefined) {
+        eloRatings[player.id] = BASE_ELO;
+      }
+    });
+
     const homeTeamAvgElo = calculateTeamAvgElo(match.homePlayers, eloRatings);
     const awayTeamAvgElo = calculateTeamAvgElo(match.awayPlayers, eloRatings);
-    
-    // Determine actual scores (1 for win, 0.5 for draw, 0 for loss)
+
     const [homeActual, awayActual] = getMatchOutcome(match.homeScore, match.awayScore);
-    
-    // Calculate goal difference for margin of victory
     const goalDifference = match.homeScore - match.awayScore;
-    
-    // Calculate ELO change based on team average (same for all players on each team)
-    const homeEloChange = calculateTeamEloChange(homeTeamAvgElo, awayTeamAvgElo, homeActual, goalDifference);
-    const awayEloChange = calculateTeamEloChange(awayTeamAvgElo, homeTeamAvgElo, awayActual, goalDifference);
-    
-    const matchDate = typeof match.played === 'number' ? match.played : new Date(match.played).getTime();
-    
-    // Apply the same ELO change to all home players
-    match.homePlayers.forEach(player => {
-      const oldElo = eloRatings[player.id] || BASE_ELO;
+
+    const homeEloChange = calculateTeamEloChange(
+      homeTeamAvgElo,
+      awayTeamAvgElo,
+      homeActual,
+      goalDifference
+    );
+    const awayEloChange = calculateTeamEloChange(
+      awayTeamAvgElo,
+      homeTeamAvgElo,
+      awayActual,
+      goalDifference
+    );
+
+    const matchDate =
+      typeof match.played === 'number' ? match.played : new Date(match.played).getTime();
+
+    match.homePlayers.forEach((player) => {
+      const oldElo = eloRatings[player.id] ?? BASE_ELO;
       const newElo = oldElo + homeEloChange;
       eloRatings[player.id] = newElo;
-      
-      // Initialize player history if not exists
+
       if (!playerEloHistory[player.username]) {
-        playerEloHistory[player.username] = [{ date: firstMatchDate, elo: BASE_ELO }];
+        playerEloHistory[player.username] = [{ date: matchDate, elo: BASE_ELO }];
       }
       playerEloHistory[player.username].push({ date: matchDate, elo: newElo });
     });
-    
-    // Apply the same ELO change to all away players
-    match.awayPlayers.forEach(player => {
-      const oldElo = eloRatings[player.id] || BASE_ELO;
+
+    match.awayPlayers.forEach((player) => {
+      const oldElo = eloRatings[player.id] ?? BASE_ELO;
       const newElo = oldElo + awayEloChange;
       eloRatings[player.id] = newElo;
-      
-      // Initialize player history if not exists
+
       if (!playerEloHistory[player.username]) {
-        playerEloHistory[player.username] = [{ date: firstMatchDate, elo: BASE_ELO }];
+        playerEloHistory[player.username] = [{ date: matchDate, elo: BASE_ELO }];
       }
       playerEloHistory[player.username].push({ date: matchDate, elo: newElo });
     });
   });
-  
+
+  players.forEach((playerArray) => {
+    const playerId = playerArray[0].id;
+    const playerName = playerArray[0].username;
+    if (eloRatings[playerId] === undefined) {
+      eloRatings[playerId] = BASE_ELO;
+    }
+    if (!playerEloHistory[playerName]) {
+      playerEloHistory[playerName] = [{ date: 0, elo: BASE_ELO }];
+    }
+  });
+
   return { playerEloHistory, eloRatings };
 };
 

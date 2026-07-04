@@ -72,13 +72,13 @@ const allIds = computed(() => playerStore.players.map((p) => p.id));
 }
 
 .team-column--home {
-  background: rgba(198, 255, 61, 0.06);
-  border: 1.5px solid rgba(198, 255, 61, 0.22);
+  background: var(--hs-win-soft);
+  border: 1.5px solid rgba(80, 250, 123, 0.22);
 }
 
 .team-column--away {
-  background: rgba(56, 166, 255, 0.06);
-  border: 1.5px solid rgba(56, 166, 255, 0.22);
+  background: rgba(139, 233, 253, 0.06);
+  border: 1.5px solid rgba(139, 233, 253, 0.22);
 }
 
 .team-column__header {
@@ -153,12 +153,12 @@ const allIds = computed(() => playerStore.players.map((p) => p.id));
 }
 
 .team-column--home .team-column__placeholder {
-  border-color: rgba(198, 255, 61, 0.28);
-  color: rgba(198, 255, 61, 0.5);
+  border-color: rgba(80, 250, 123, 0.28);
+  color: rgba(80, 250, 123, 0.5);
 }
 
 .team-column--away .team-column__placeholder {
-  border-color: rgba(56, 166, 255, 0.28);
-  color: rgba(56, 166, 255, 0.5);
+  border-color: rgba(139, 233, 253, 0.28);
+  color: rgba(139, 233, 253, 0.5);
 }
 </style>

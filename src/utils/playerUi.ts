@@ -1,17 +1,17 @@
 export const AVATAR_COLORS = [
-  '#C6FF3D',
-  '#38A6FF',
-  '#FFCB45',
-  '#FF5B39',
-  '#B98CFF',
-  '#4FE0B0',
-  '#FF8FB0',
-  '#7FA6FF',
-  '#E0C48A',
-  '#9AA7B4',
+  '#50fa7b',
+  '#8be9fd',
+  '#f1fa8c',
+  '#ff5555',
+  '#bd93f9',
+  '#ffb86c',
+  '#ff79c6',
+  '#6272a4',
+  '#a9b0d6',
+  '#44475a',
 ] as const;
 
-export const MEDAL_COLORS = ['#FFCB45', '#C9D2DC', '#E08A4B'] as const;
+export const MEDAL_COLORS = ['#f1fa8c', '#a9b0d6', '#ffb86c'] as const;
 
 export function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);

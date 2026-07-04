@@ -8,21 +8,25 @@
 }
 
 :root {
-  --hs-bg: #0a0e13;
-  --hs-surface: #12171e;
-  --hs-elevated: #161c24;
-  --hs-sheet: #0e1319;
-  --hs-border: rgba(255, 255, 255, 0.07);
-  --hs-text: #f2f5f7;
-  --hs-text-muted: #8a94a0;
-  --hs-text-dim: #6b7683;
-  --hs-text-faint: #4a5563;
-  --hs-lime: #c6ff3d;
-  --hs-blue: #38a6ff;
-  --hs-red: #ff5b39;
-  --hs-purple: #b98cff;
-  --hs-gold: #ffcb45;
-  --hs-cooling: #ff8fb0;
+  --hs-bg: #282a36;
+  --hs-surface: #21222c;
+  --hs-elevated: #343746;
+  --hs-sheet: #21222c;
+  --hs-border: rgba(248, 248, 242, 0.08);
+  --hs-text: #f8f8f2;
+  --hs-text-muted: #a9b0d6;
+  --hs-text-dim: #6272a4;
+  --hs-text-faint: #4b5273;
+  --hs-accent: #bd93f9;
+  --hs-lime: #50fa7b;
+  --hs-blue: #8be9fd;
+  --hs-red: #ff5555;
+  --hs-purple: #bd93f9;
+  --hs-gold: #f1fa8c;
+  --hs-cooling: #ff79c6;
+  --hs-accent-soft: rgba(189, 147, 249, 0.14);
+  --hs-win-soft: rgba(80, 250, 123, 0.16);
+  --hs-loss-soft: rgba(255, 85, 85, 0.16);
   --hs-font-display: 'Archivo Expanded', system-ui, sans-serif;
   --hs-font-heading: 'Archivo', system-ui, sans-serif;
   --hs-font-body: 'Space Grotesk', system-ui, sans-serif;
@@ -105,10 +109,10 @@ body,
 @keyframes hsPulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(198, 255, 61, 0.55);
+    box-shadow: 0 0 0 0 rgba(189, 147, 249, 0.55);
   }
   50% {
-    box-shadow: 0 0 0 7px rgba(198, 255, 61, 0);
+    box-shadow: 0 0 0 7px rgba(189, 147, 249, 0);
   }
 }
 

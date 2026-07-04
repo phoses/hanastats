@@ -33,6 +33,10 @@ export const useUiStore = defineStore('ui', () => {
   const tab = ref<AppTab>('standings');
   const expandedPlayerId = ref<string | null>(null);
   const gameFilterId = ref<string | 'all'>('all');
+  const playerCountFilter = ref<number[]>([]);
+  const playedMatchMonthFilter = ref<string[]>([]);
+  const standingsAsWholeTeam = ref(false);
+  const playersInSameTeam = ref<Player[]>([]);
   const chartSelectedIds = ref<string[]>([]);
   const justAddedIds = ref<string[]>([]);
   const toast = ref<string | null>(null);
@@ -52,6 +56,34 @@ export const useUiStore = defineStore('ui', () => {
 
   function setGameFilter(id: string | 'all') {
     gameFilterId.value = id;
+  }
+
+  function togglePlayerCountFilter(count: number) {
+    if (playerCountFilter.value.includes(count)) {
+      playerCountFilter.value = playerCountFilter.value.filter((c) => c !== count);
+    } else {
+      playerCountFilter.value = [...playerCountFilter.value, count];
+    }
+  }
+
+  function toggleMonthFilter(month: string) {
+    if (playedMatchMonthFilter.value.includes(month)) {
+      playedMatchMonthFilter.value = playedMatchMonthFilter.value.filter((m) => m !== month);
+    } else {
+      playedMatchMonthFilter.value = [...playedMatchMonthFilter.value, month];
+    }
+  }
+
+  function toggleSameTeamPlayer(player: Player) {
+    if (playersInSameTeam.value.some((p) => p.id === player.id)) {
+      playersInSameTeam.value = playersInSameTeam.value.filter((p) => p.id !== player.id);
+    } else {
+      playersInSameTeam.value = [...playersInSameTeam.value, player];
+    }
+  }
+
+  function toggleStandingsAsWholeTeam() {
+    standingsAsWholeTeam.value = !standingsAsWholeTeam.value;
   }
 
   function toggleChartPlayer(playerId: string) {
@@ -97,7 +129,7 @@ export const useUiStore = defineStore('ui', () => {
 
   function onMatchSaved(playerIds: string[], matchId?: string) {
     tab.value = 'standings';
-    closeAddMatch();
+    add.value = defaultAddState();
     highlightPlayers(playerIds, matchId);
     showToast('Match saved · standings updated');
   }
@@ -106,6 +138,10 @@ export const useUiStore = defineStore('ui', () => {
     tab,
     expandedPlayerId,
     gameFilterId,
+    playerCountFilter,
+    playedMatchMonthFilter,
+    standingsAsWholeTeam,
+    playersInSameTeam,
     chartSelectedIds,
     justAddedIds,
     toast,
@@ -114,6 +150,10 @@ export const useUiStore = defineStore('ui', () => {
     setTab,
     toggleExpanded,
     setGameFilter,
+    togglePlayerCountFilter,
+    toggleMonthFilter,
+    toggleSameTeamPlayer,
+    toggleStandingsAsWholeTeam,
     toggleChartPlayer,
     initChartSelection,
     openAddMatch,
