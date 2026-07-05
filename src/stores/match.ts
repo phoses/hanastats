@@ -128,16 +128,23 @@ export const useMatchStore = defineStore('match', () => {
     await set(child(dbRef, 'metadata/matches/version'), currentVersion + 1);
   }
 
-  async function addMatch(match: Match) {
+  async function addMatch(match: Match): Promise<string | undefined> {
     match = {
       ...match,
       played: new Date().getTime(),
     }
     const addedMatch = await push(fbRef(getDatabase(), 'matches/'), match);
+    const id = addedMatch.key ?? undefined;
     matches.value?.push({
-      id: addedMatch.key!,
+      id,
       ...match,
     });
+    await bumpMatchesVersion();
+    const version = await getMatchesVersion();
+    if (matches.value) {
+      saveMatchesToStorage(version, matches.value);
+    }
+    return id;
   }
 
   return { matches, getMatches, addMatch, bumpMatchesVersion, getMatchesVersion }

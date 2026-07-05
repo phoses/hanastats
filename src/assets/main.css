@@ -1,12 +1,154 @@
-@font-face {
-  font-family: "FixedSys";
-  src: url('./fixedsys.ttf');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Archivo+Expanded:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-:root, html {
-  font-family: 'FixedSys' !important;
+:root {
+  --hs-bg: #282a36;
+  --hs-surface: #21222c;
+  --hs-elevated: #343746;
+  --hs-sheet: #21222c;
+  --hs-border: rgba(248, 248, 242, 0.08);
+  --hs-text: #f8f8f2;
+  --hs-text-muted: #a9b0d6;
+  --hs-text-dim: #6272a4;
+  --hs-text-faint: #4b5273;
+  --hs-accent: #bd93f9;
+  --hs-lime: #50fa7b;
+  --hs-blue: #8be9fd;
+  --hs-red: #ff5555;
+  --hs-purple: #bd93f9;
+  --hs-gold: #f1fa8c;
+  --hs-cooling: #ff79c6;
+  --hs-accent-soft: rgba(189, 147, 249, 0.14);
+  --hs-win-soft: rgba(80, 250, 123, 0.16);
+  --hs-loss-soft: rgba(255, 85, 85, 0.16);
+  --hs-font-display: 'Archivo Expanded', system-ui, sans-serif;
+  --hs-font-heading: 'Archivo', system-ui, sans-serif;
+  --hs-font-body: 'Space Grotesk', system-ui, sans-serif;
+  --hs-scroll-top: 52px;
+  --hs-scroll-bottom: 106px;
+  --hs-nav-height: 92px;
 }
 
-.p-component, .p-inputtext {
+html,
+body,
+#app {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--hs-bg);
+  color: var(--hs-text);
+  font-family: var(--hs-font-body);
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.hs-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+@keyframes hsPop {
+  0% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes hsSlideUp {
+  from {
+    transform: translateY(101%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes hsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes hsToast {
+  0% {
+    transform: translate(-50%, 20px);
+    opacity: 0;
+  }
+  12% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hsPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(189, 147, 249, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(189, 147, 249, 0);
+  }
+}
+
+.hs-animate-fade {
+  animation: hsFadeIn 0.3s ease;
+}
+
+.hs-animate-pop {
+  animation: hsPop 0.4s ease;
+}
+
+.hs-animate-slide-up {
+  animation: hsSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hs-animate-toast {
+  animation: hsToast 2.6s ease forwards;
+}
+
+.hs-animate-pulse {
+  animation: hsPulse 2.6s infinite;
+}
+
+.font-display {
+  font-family: var(--hs-font-display);
+}
+
+.font-heading {
+  font-family: var(--hs-font-heading);
+}
+
+.font-body {
+  font-family: var(--hs-font-body);
+}
+
+.p-component,
+.p-inputtext {
   font-family: inherit;
 }
