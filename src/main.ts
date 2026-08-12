@@ -2,6 +2,7 @@ import 'primeicons/primeicons.css'
 import 'primevue/resources/themes/md-dark-indigo/theme.css';
 import 'primeflex/primeflex.css';
 import './assets/main.css'
+import './ui/styles/tailwind.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

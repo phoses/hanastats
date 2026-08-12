@@ -1,12 +1,13 @@
 
 <template>
-  <div class="flex justify-content-center flex-wrap">
+  <div v-if="uiStore.mode === 'classic'" class="flex justify-content-center flex-wrap">
     <div class="flex flex-column w-full sm:w-30rem">
       <Menubar :model="items" breakpoint="50"/>
       <ProgressBar v-if="isLoading" mode="indeterminate"/>
       <RouterView/>
     </div>
   </div>
+  <RouterView v-else/>
 </template>
 
 <script setup lang="ts">
@@ -22,6 +23,9 @@
 import { useGamesStore } from './stores/game';
 import { usePlayersStore } from './stores/player';
 import { useMatchStore } from './stores/match';
+import { useUiStore } from './stores/ui';
+  import { classicToModernRoute } from './ui/routeMap';
+  import { useRouteChrome } from './ui/composables/useRouteChrome';
 
   const router = useRouter()
   const userStore = useUserStore();
@@ -30,6 +34,9 @@ import { useMatchStore } from './stores/match';
   const gameStore = useGamesStore();
   const playerStore = usePlayersStore();
   const matchStore = useMatchStore();
+  const uiStore = useUiStore();
+
+  useRouteChrome();
 
   onMounted(async () => {
     loadingStore.doLoading((async () => {
@@ -48,6 +55,12 @@ import { useMatchStore } from './stores/match';
 
   async function logout () {
     loadingStore.doLoading(async () => (await userStore.logout()));
+  }
+
+  function switchToModernUi () {
+    uiStore.setMode('modern');
+    const currentName = String(router.currentRoute.value.name ?? '');
+    router.replace({ name: classicToModernRoute[currentName] ?? 'modern-standings' });
   }
 
   const isLoading = computed(() => loadingStore.isLoading());
@@ -73,6 +86,8 @@ import { useMatchStore } from './stores/match';
         items.push({ icon: PrimeIcons.SIGN_IN, command: () => login()});
       }
     }
+
+    items.push({ label: 'new ui', icon: PrimeIcons.STAR, command: () => switchToModernUi()});
 
     return items;
   });
