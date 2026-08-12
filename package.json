@@ -14,6 +14,7 @@
     "deploy": "vite build && firebase deploy"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
     "chart.js": "^4.5.1",
     "chartjs-adapter-date-fns": "^3.0.0",
     "date-fns": "^4.1.0",
@@ -23,6 +24,7 @@
     "primeflex": "^3.3.1",
     "primeicons": "^6.0.1",
     "primevue": "^3.47.2",
+    "tailwindcss": "^4.3.3",
     "vue": "^3.3.11",
     "vue-chartjs": "^5.3.3",
     "vue-router": "^4.2.5"

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="hanastats standings">
+  <rect width="512" height="512" rx="112" fill="#0a0e1a"/>
+  <g fill="#fbbf24">
+    <path d="M176 148h160v76c0 48-36 88-80 88s-80-40-80-88v-76z"/>
+    <path d="M152 156c-20 0-32 14-32 30s14 30 32 30v-24c-8 0-12-4-12-10s4-10 12-10v-16z"/>
+    <path d="M360 156c20 0 32 14 32 30s-14 30-32 30v-24c8 0 12-4 12-10s-4-10-12-10v-16z"/>
+    <rect x="232" y="312" width="48" height="56" rx="6"/>
+    <rect x="196" y="368" width="120" height="28" rx="8"/>
+  </g>
+  <defs>
+    <linearGradient id="accent" x1="76" y1="452" x2="436" y2="452" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6d4aff"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <rect x="76" y="448" width="360" height="8" rx="4" fill="url(#accent)"/>
+</svg>

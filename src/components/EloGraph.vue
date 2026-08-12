@@ -1,5 +1,5 @@
 <template>
-  <div class="elo-chart-container">
+  <div class="elo-chart-container" :style="{ height }">
     <Line v-if="chartData" :data="chartData" :options="chartOptions" />
   </div>
 </template>
@@ -20,9 +20,12 @@ import type { Match, Player } from '@/utils/elo';
 interface Props {
   matches: Match[];
   players: Player[][];
+  height?: string;
 }
 
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  height: '500px',
+});
 
 const chartData = computed(() => {
   if (!props.matches || props.matches.length === 0) {
@@ -112,7 +115,6 @@ const chartOptions = computed(() => ({
 
 <style scoped>
 .elo-chart-container {
-  height: 500px;
   width: 100%;
 }
 </style>

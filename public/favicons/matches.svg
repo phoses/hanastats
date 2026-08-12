@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="hanastats matches">
+  <rect width="512" height="512" rx="112" fill="#0a0e1a"/>
+  <g fill="#34d399">
+    <rect x="188" y="220" width="44" height="112" rx="10"/>
+    <rect x="234" y="168" width="44" height="164" rx="10"/>
+    <rect x="280" y="248" width="44" height="84" rx="10"/>
+  </g>
+  <defs>
+    <linearGradient id="accent" x1="76" y1="452" x2="436" y2="452" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6d4aff"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <rect x="76" y="448" width="360" height="8" rx="4" fill="url(#accent)"/>
+</svg>

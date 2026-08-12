@@ -1,0 +1,173 @@
+/*
+ * Tailwind is loaded with the `tw` prefix and without Preflight on purpose:
+ * PrimeFlex utilities use !important and share class names with Tailwind
+ * (mt-3, gap-3, w-6, ...) but with different values, and Preflight would reset
+ * headings and lists in the classic PrimeVue UI as well.
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme) prefix(tw) theme(static);
+@import 'tailwindcss/utilities.css' layer(utilities) prefix(tw);
+
+@theme {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --color-canvas: #0a0e1a;
+  --color-surface: #131a2e;
+  --color-surface-2: #1b2340;
+  --color-surface-3: #253055;
+  --color-line: #2c3763;
+  --color-line-strong: #3f4d80;
+
+  --color-ink: #eaeefb;
+  --color-ink-muted: #a7b1d6;
+  /* Values are tuned so that even small text clears the 4.5:1 contrast ratio. */
+  --color-ink-subtle: #8792bb;
+
+  --color-accent: #a78bfa;
+  --color-accent-strong: #6d4aff;
+  --color-accent-soft: #241b52;
+  --color-accent-ink: #0a0e1a;
+
+  --color-win: #34d399;
+  --color-loss: #fb7185;
+  --color-warn: #fbbf24;
+
+  /* Narrow phones and small browser windows drop the least important of the
+   * "mobile" table columns. */
+  --breakpoint-xs: 22rem;
+
+  --radius-ui: 0.625rem;
+  --radius-card: 0.875rem;
+  --radius-sheet: 1.25rem;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35), 0 12px 28px -18px rgb(0 0 0 / 0.6);
+  --shadow-sheet: 0 -10px 44px rgb(0 0 0 / 0.55);
+
+  --animate-progress: progress 1.1s ease-in-out infinite;
+
+  @keyframes progress {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(400%);
+    }
+  }
+}
+
+@layer base {
+  [data-ui='modern'] {
+    color-scheme: dark;
+    background-color: var(--tw-color-canvas);
+  }
+
+  /*
+   * Styles target `body` and below, never `html`: src/assets/main.css pins
+   * FixedSys on `html` with !important, and rules that match a descendant
+   * directly always beat an inherited value.
+   */
+  [data-ui='modern'] body {
+    margin: 0;
+    font-family: var(--tw-font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--tw-color-ink);
+    background-color: var(--tw-color-canvas);
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /*
+   * Preflight normally does this. Without it Tailwind's `border` utility would
+   * only set a width while the border style stays `none`, so no border renders.
+   */
+  [data-ui='modern'] :where(*, *::before, *::after) {
+    box-sizing: border-box;
+    border: 0 solid var(--tw-color-line);
+  }
+
+  [data-ui='modern'] :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd) {
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
+  }
+
+  [data-ui='modern'] :where(ul, ol) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  [data-ui='modern'] :where(button, input, select, textarea) {
+    font: inherit;
+    color: inherit;
+    letter-spacing: inherit;
+  }
+
+  [data-ui='modern'] :where(button) {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-align: inherit;
+  }
+
+  [data-ui='modern'] :where(button:disabled) {
+    cursor: not-allowed;
+  }
+
+  [data-ui='modern'] :where(a) {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  [data-ui='modern'] :where(input, select, textarea) {
+    background-color: transparent;
+  }
+
+  [data-ui='modern'] :where(input, textarea)::placeholder {
+    color: var(--tw-color-ink-subtle);
+    opacity: 1;
+  }
+
+  [data-ui='modern'] :where(img, svg, video, canvas) {
+    display: block;
+    max-width: 100%;
+  }
+
+  [data-ui='modern'] :where(table) {
+    border-collapse: collapse;
+    border-spacing: 0;
+  }
+
+  [data-ui='modern'] :where(th) {
+    font-weight: 600;
+    text-align: left;
+  }
+
+  [data-ui='modern'] :where(hr) {
+    border: 0;
+    border-top: 1px solid var(--tw-color-line);
+  }
+
+  [data-ui='modern'] :where(:focus-visible) {
+    outline: 2px solid var(--tw-color-accent);
+    outline-offset: 2px;
+    border-radius: var(--tw-radius-ui);
+  }
+
+  [data-ui='modern'] ::selection {
+    background-color: var(--tw-color-accent-strong);
+    color: #fff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-ui='modern'] :where(*) {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

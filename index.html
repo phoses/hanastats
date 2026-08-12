@@ -2,9 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link id="app-favicon" rel="icon" href="/favicons/standings.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0e1a">
     <title>hanastats</title>
+    <script>
+      // Set the UI mode before first paint so the modern theme does not flash.
+      try {
+        var storedUiMode = localStorage.getItem('hanastats-ui-mode');
+        document.documentElement.dataset.ui = storedUiMode === 'classic' ? 'classic' : 'modern';
+      } catch (error) {
+        document.documentElement.dataset.ui = 'modern';
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>
