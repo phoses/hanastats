@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="hanastats trends">
+  <rect width="512" height="512" rx="112" fill="#0a0e1a"/>
+  <g fill="none" stroke="#e879f9" stroke-width="36" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M128 340l72-88 56 48 128-140"/>
+    <path d="M296 160h108v108"/>
+  </g>
+  <defs>
+    <linearGradient id="accent" x1="76" y1="452" x2="436" y2="452" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6d4aff"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#34d399"/>
+    </linearGradient>
+  </defs>
+  <rect x="76" y="448" width="360" height="8" rx="4" fill="url(#accent)"/>
+</svg>

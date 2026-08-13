@@ -9,7 +9,7 @@ import { usePlayersStore } from '@/stores/player';
 
 /**
  * Wires the shared stats logic to the modern UI filter store so that the
- * standings and matches views stay in sync.
+ * standings, matches, and trends views stay in sync.
  */
 export function useModernStats() {
   const filtersStore = useModernFiltersStore();

@@ -11,7 +11,7 @@
 
     <main
       id="modern-main"
-      class="tw:mx-auto tw:w-full tw:max-w-3xl tw:px-3 tw:pt-4 tw:pb-[calc(5rem+env(safe-area-inset-bottom))]"
+      class="tw:mx-auto tw:w-full tw:max-w-3xl tw:px-3 tw:pt-4 tw:pb-[calc(6rem+env(safe-area-inset-bottom))]"
     >
       <RouterView />
     </main>
