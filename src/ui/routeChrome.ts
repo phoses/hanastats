@@ -28,6 +28,13 @@ const addChrome: RouteChrome = {
   favicon: '/favicons/add.svg',
 };
 
+const trendsChrome: RouteChrome = {
+  title: 'trends',
+  headerIcon: 'trend',
+  headerIconClass: 'tw:text-fuchsia-300',
+  favicon: '/favicons/trends.svg',
+};
+
 const moreChrome: RouteChrome = {
   title: 'more',
   headerIcon: 'settings',
@@ -48,6 +55,7 @@ export const routeChromeByName: Record<string, RouteChrome> = {
   'modern-standings': standingsChrome,
   'modern-matches': matchesChrome,
   'modern-add': addChrome,
+  'modern-trends': trendsChrome,
   'modern-more': moreChrome,
   'modern-kitchen-sink': {
     title: 'components',

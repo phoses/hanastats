@@ -44,6 +44,11 @@ const router = createRouter({
           component: () => import('../ui/views/AddMatchView.vue'),
         },
         {
+          path: 'trends',
+          name: 'modern-trends',
+          component: () => import('../ui/views/TrendsView.vue'),
+        },
+        {
           path: 'more',
           name: 'modern-more',
           component: () => import('../ui/views/MoreView.vue'),

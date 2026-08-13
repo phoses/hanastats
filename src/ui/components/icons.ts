@@ -18,7 +18,10 @@ export type IconName =
   | 'refresh'
   | 'database'
   | 'graph'
+  | 'trend'
   | 'trophy'
+  | 'calendar'
+  | 'moon'
   | 'flame'
   | 'snowflake'
   | 'gamepad'
@@ -50,6 +53,9 @@ export const icons: Record<IconName, string> = {
   'refresh': '<path d="M20.5 12a8.5 8.5 0 11-2.6-6.1"/><path d="M21 3v6h-6"/>',
   'database': '<path d="M12 3c4.4 0 8 1.3 8 3s-3.6 3-8 3-8-1.3-8-3 3.6-3 8-3z"/><path d="M20 6v12c0 1.7-3.6 3-8 3s-8-1.3-8-3V6"/><path d="M20 12c0 1.7-3.6 3-8 3s-8-1.3-8-3"/>',
   'graph': '<path d="M4 4v16h16"/><path d="M7 15l4-5 3 3 5-7"/>',
+  'trend': '<path d="M4 17l5-5 3 3 8-8"/><path d="M14 7h6v6"/>',
+  'calendar': '<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 3v4"/><path d="M16 3v4"/><path d="M4 10h16"/>',
+  'moon': '<path d="M15 4.2A7.2 7.2 0 1012 19.8 6.2 6.2 0 0015 4.2z"/>',
   'trophy': '<path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M8 5H6a2 2 0 002 2"/><path d="M16 5h2a2 2 0 01-2 2"/><path d="M12 13v4"/><path d="M9 20h6"/>',
   'flame': '<path d="M12 3c3 3.6 5 5.9 5 9a5 5 0 01-10 0c0-1.6.8-3 2.2-4.3.4 1 1 1.7 1.8 2C10.3 7.4 11 5.2 12 3z"/>',
   'snowflake': '<path d="M12 3v18"/><path d="M4.5 7.5l15 9"/><path d="M19.5 7.5l-15 9"/><path d="M9.5 4.5L12 6l2.5-1.5"/><path d="M9.5 19.5L12 18l2.5 1.5"/>',

@@ -12,6 +12,7 @@ export const modernToClassicRoute: Record<string, string> = {
   'modern-standings': 'stats',
   'modern-matches': 'stats',
   'modern-add': 'addmatch',
+  'modern-trends': 'stats',
   'modern-more': 'config',
   'modern-kitchen-sink': 'stats',
 };
