@@ -22,10 +22,21 @@
         <UiIcon name="plus" :size="26" />
       </UiIconButton>
     </div>
+    <UiButton
+      variant="secondary"
+      size="sm"
+      class="tw:min-h-11"
+      :disabled="modelValue >= max"
+      :aria-label="`increase ${label} by 5`"
+      @click="step(5)"
+    >
+      +5
+    </UiButton>
   </div>
 </template>
 
 <script setup lang="ts">
+import UiButton from './UiButton.vue';
 import UiIcon from './UiIcon.vue';
 import UiIconButton from './UiIconButton.vue';
 

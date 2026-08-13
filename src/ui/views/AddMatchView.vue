@@ -1,5 +1,5 @@
 <template>
-  <div :class="['tw:flex tw:flex-col tw:gap-5', canSubmit ? 'tw:pb-16' : '']">
+  <div :class="['tw:flex tw:flex-col tw:gap-5', canSubmit ? 'tw:pb-24' : '']">
     <p v-if="savedMessage" class="tw:rounded-ui tw:border tw:border-win/40 tw:bg-win/15 tw:px-3 tw:py-2 tw:text-sm tw:text-win" role="status">
       {{ savedMessage }}
     </p>
@@ -134,7 +134,7 @@
 
   <div
     v-if="canSubmit"
-    class="tw:fixed tw:inset-x-0 tw:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] tw:z-30 tw:border-t tw:border-line tw:bg-canvas/95 tw:backdrop-blur"
+    class="tw:fixed tw:inset-x-0 tw:bottom-[calc(4.25rem+env(safe-area-inset-bottom))] tw:z-30 tw:border-t tw:border-line tw:bg-canvas/95 tw:backdrop-blur"
   >
     <div class="tw:mx-auto tw:w-full tw:max-w-3xl tw:px-3 tw:py-2">
       <UiButton variant="primary" size="lg" block :loading="submitting" @click="submit">add match</UiButton>

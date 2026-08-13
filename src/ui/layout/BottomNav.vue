@@ -17,24 +17,17 @@
         </RouterLink>
       </li>
 
-      <li v-if="addItem" class="tw:relative tw:z-10 tw:flex tw:grow tw:basis-0">
+      <li v-if="addItem" class="tw:flex tw:grow tw:basis-0 tw:items-center tw:justify-center">
         <RouterLink
           :to="{ name: addItem.name }"
           :aria-current="isActive(addItem.name) ? 'page' : undefined"
+          :aria-label="addItem.label"
           :class="[
-            'tw:flex tw:min-h-14 tw:w-full tw:flex-col tw:items-center tw:justify-end tw:gap-0.5 tw:pb-2 tw:text-[0.7rem] tw:transition-colors',
-            isActive(addItem.name) ? addItem.activeClass : 'tw:text-ink-muted tw:hover:text-ink',
+            'tw:flex tw:size-12 tw:items-center tw:justify-center tw:rounded-full tw:bg-accent-strong tw:text-white tw:shadow-[0_2px_8px_rgb(0_0_0/0.45)] tw:transition-colors',
+            isActive(addItem.name) ? 'tw:ring-2 tw:ring-violet-300/70 tw:ring-offset-2 tw:ring-offset-surface' : '',
           ]"
         >
-          <span
-            :class="[
-              'tw:flex tw:size-14 tw:-mt-5 tw:items-center tw:justify-center tw:rounded-full tw:bg-accent-strong tw:text-white tw:shadow-[0_2px_8px_rgb(0_0_0/0.45)]',
-              isActive(addItem.name) ? 'tw:ring-2 tw:ring-violet-300/70 tw:ring-offset-2 tw:ring-offset-surface' : '',
-            ]"
-          >
-            <UiIcon :name="addItem.icon" :size="28" />
-          </span>
-          <span>{{ addItem.label }}</span>
+          <UiIcon :name="addItem.icon" :size="26" />
         </RouterLink>
       </li>
 
